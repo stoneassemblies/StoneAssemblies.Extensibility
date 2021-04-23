@@ -221,7 +221,6 @@ namespace StoneAssemblies.Extensibility.Services
                         var pluginsDirectoryPath = Path.GetFullPath(PluginsDirectoryFolderName);
                         await this.DownloadPackageAsync(
                             new PackageDependency(packageId, new VersionRange(packageVersion)),
-                            resource,
                             pluginsDirectoryPath);
 
                         var packageDirectoryName = $"{packageId}.{packageVersion.OriginalVersion}";
@@ -337,84 +336,89 @@ namespace StoneAssemblies.Extensibility.Services
         /// </returns>
         private async Task DownloadPackageAsync(
             PackageDependency package,
-            FindPackageByIdResource resource,
             string destination)
         {
-            var packageId = package.Id;
-            var packageDependencyVersions = await resource.GetAllVersionsAsync(
-                                                packageId,
-                                                new NullSourceCacheContext(),
-                                                NullLogger.Instance,
-                                                CancellationToken.None);
-
-            var packageVersion = package.VersionRange.FindBestMatch(packageDependencyVersions);
-            if (packageVersion != null)
+            foreach (var sourceRepository in this.sourceRepositories)
             {
-                if (!Directory.Exists(CacheDirectoryFolderName))
-                {
-                    Directory.CreateDirectory(CacheDirectoryFolderName);
-                }
+                var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
 
-                var packageFileName = Path.Combine(
-                    CacheDirectoryFolderName,
-                    $"{packageId}.{packageVersion.OriginalVersion}.nupkg");
-                var packageDirectoryName = Path.GetFileNameWithoutExtension(packageFileName);
-                if (!File.Exists(packageFileName))
+                var packageId = package.Id;
+                var packageDependencyVersions = await resource.GetAllVersionsAsync(
+                                                    packageId,
+                                                    new NullSourceCacheContext(),
+                                                    NullLogger.Instance,
+                                                    CancellationToken.None);
+
+                var packageVersion = package.VersionRange.FindBestMatch(packageDependencyVersions);
+                if (packageVersion != null)
                 {
-                    await using (var packageStream = new FileStream(packageFileName, FileMode.Create, FileAccess.Write))
+                    if (!Directory.Exists(CacheDirectoryFolderName))
                     {
-                        Log.Information(
-                            "Downloading dependency package {PackageId} {PackageVersion}",
-                            packageId,
-                            packageVersion.OriginalVersion);
-
-                        await resource.CopyNupkgToStreamAsync(
-                            packageId,
-                            packageVersion,
-                            packageStream,
-                            new NullSourceCacheContext(),
-                            NullLogger.Instance,
-                            CancellationToken.None);
+                        Directory.CreateDirectory(CacheDirectoryFolderName);
                     }
-                }
 
-                using (var archiveReader = new PackageArchiveReader(packageFileName))
-                {
-                    foreach (var dependencyGroup in archiveReader.GetPackageDependencies())
+                    var packageFileName = Path.Combine(
+                        CacheDirectoryFolderName,
+                        $"{packageId}.{packageVersion.OriginalVersion}.nupkg");
+                    var packageDirectoryName = Path.GetFileNameWithoutExtension(packageFileName);
+                    if (!File.Exists(packageFileName))
                     {
-                        if (TargetFrameworkDependencies.Contains(
-                            dependencyGroup.TargetFramework.DotNetFrameworkName,
-                            StringComparer.InvariantCultureIgnoreCase))
+                        await using (var packageStream = new FileStream(packageFileName, FileMode.Create, FileAccess.Write))
                         {
-                            foreach (var packageDependency in dependencyGroup.Packages)
-                            {
-                                try
-                                {
-                                    await this.DownloadPackageAsync(
-                                        packageDependency,
-                                        resource,
-                                        DependenciesDirectoryFolderName);
-                                }
-                                catch (Exception e)
-                                {
-                                    Log.Error(e, "Error downloading package {PackageId}", packageDependency.Id);
-                                }
-                            }
+                            Log.Information(
+                                "Downloading dependency package {PackageId} {PackageVersion}",
+                                packageId,
+                                packageVersion.OriginalVersion);
 
-                            break;
+                            await resource.CopyNupkgToStreamAsync(
+                                packageId,
+                                packageVersion,
+                                packageStream,
+                                new NullSourceCacheContext(),
+                                NullLogger.Instance,
+                                CancellationToken.None);
                         }
                     }
-                }
 
-                if (!Directory.Exists(destination))
-                {
-                    Directory.CreateDirectory(destination);
-                }
+                    using (var archiveReader = new PackageArchiveReader(packageFileName))
+                    {
+                        foreach (var dependencyGroup in archiveReader.GetPackageDependencies())
+                        {
+                            if (TargetFrameworkDependencies.Contains(
+                                dependencyGroup.TargetFramework.DotNetFrameworkName,
+                                StringComparer.InvariantCultureIgnoreCase))
+                            {
+                                foreach (var packageDependency in dependencyGroup.Packages)
+                                {
+                                    try
+                                    {
+                                        await this.DownloadPackageAsync(
+                                            packageDependency,
+                                            DependenciesDirectoryFolderName);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Log.Error(e, "Error downloading package {PackageId}", packageDependency.Id);
+                                    }
+                                }
 
-                var packagesDirectoryPath = Path.Combine(destination, packageDirectoryName);
-                if (!Directory.Exists(packagesDirectoryPath))
-                {
-                    ZipFile.ExtractToDirectory(packageFileName, packagesDirectoryPath, true);
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!Directory.Exists(destination))
+                    {
+                        Directory.CreateDirectory(destination);
+                    }
+
+                    var packagesDirectoryPath = Path.Combine(destination, packageDirectoryName);
+                    if (!Directory.Exists(packagesDirectoryPath))
+                    {
+                        ZipFile.ExtractToDirectory(packageFileName, packagesDirectoryPath, true);
+                    }
+
+                    break;
                 }
             }
         }
