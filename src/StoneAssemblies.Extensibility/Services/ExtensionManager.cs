@@ -4,6 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
+#nullable enable
 namespace StoneAssemblies.Extensibility.Services
 {
     using System;
@@ -18,6 +19,7 @@ namespace StoneAssemblies.Extensibility.Services
     using System.Threading.Tasks;
 
     using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
 
     using NuGet.Common;
     using NuGet.Packaging;
@@ -95,7 +97,12 @@ namespace StoneAssemblies.Extensibility.Services
         /// <summary>
         ///     The repository.
         /// </summary>
-        private readonly SourceRepository repository;
+        private readonly List<SourceRepository> sourceRepositories = new List<SourceRepository>();
+
+        /// <summary>
+        ///     The service collection.
+        /// </summary>
+        private readonly IServiceCollection serviceCollection;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="ExtensionManager" /> class.
@@ -103,36 +110,39 @@ namespace StoneAssemblies.Extensibility.Services
         /// <param name="configuration">
         ///     The configuration.
         /// </param>
-        private ExtensionManager(IConfiguration configuration)
+        /// <param name="serviceCollection">
+        ///     The service collection.
+        /// </param>
+        public ExtensionManager(IConfiguration configuration, IServiceCollection serviceCollection)
         {
+            this.configuration = configuration;
+            this.serviceCollection = serviceCollection;
+
             AssemblyLoadContext.Default.ResolvingUnmanagedDll += this.OnAssemblyLoadContextResolvingUnmanagedDll;
             AppDomain.CurrentDomain.AssemblyResolve += this.OnCurrentAppDomainAssemblyResolve;
 
-            this.configuration = configuration;
-            var repositoryUrl = this.configuration.GetSection("Extensions")["RepositoryUrl"];
-            if (!string.IsNullOrWhiteSpace(repositoryUrl))
+            var sources = configuration.GetSection("Extensions").GetValue<string[]>("Sources");
+            if (sources != null)
             {
-                if (!Uri.TryCreate(repositoryUrl, UriKind.Absolute, out _) && Directory.Exists(repositoryUrl))
+                foreach (var source in sources)
                 {
-                    repositoryUrl = Path.GetFullPath(repositoryUrl);
+                    var s = source;
+                    if (!Uri.TryCreate(source, UriKind.Absolute, out _) && Directory.Exists(source))
+                    {
+                        s = Path.GetFullPath(s);
+                    }
+
+                    try
+                    {
+                        var sourceRepository = Repository.Factory.GetCoreV3(s);
+                        this.sourceRepositories.Add(sourceRepository);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e, "Error creating source repository");
+                    }
                 }
-
-                this.repository = Repository.Factory.GetCoreV3(repositoryUrl);
             }
-        }
-
-        /// <summary>
-        ///     Creates an extension manager from a configuration.
-        /// </summary>
-        /// <param name="configuration">
-        ///     The configuration.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="IExtensionManager" />.
-        /// </returns>
-        public static IExtensionManager From(IConfiguration configuration)
-        {
-            return new ExtensionManager(configuration);
         }
 
         /// <summary>
@@ -173,13 +183,19 @@ namespace StoneAssemblies.Extensibility.Services
         /// </returns>
         public async Task LoadExtensionsAsync(List<string> packageIds)
         {
-            if (this.repository != null)
+            SortedSet<string> loadedPackageIds = new SortedSet<string>();
+            foreach (var sourceRepository in this.sourceRepositories)
             {
-                var resource = await this.repository.GetResourceAsync<FindPackageByIdResource>();
+                var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
                 foreach (var id in packageIds)
                 {
+                    if (loadedPackageIds.Contains(id))
+                    {
+                        break;
+                    }
+
                     var packageId = id;
-                    NuGetVersion packageVersion = null;
+                    NuGetVersion? packageVersion = null;
 
                     var packageIdParts = id.Split(':');
                     if (packageIdParts.Length == 2)
@@ -228,8 +244,12 @@ namespace StoneAssemblies.Extensibility.Services
                                     {
                                         foreach (var assemblyFile in assemblyFiles)
                                         {
-                                            this.extensions.Add(Assembly.LoadFrom(assemblyFile));
+                                            var assembly = Assembly.LoadFrom(assemblyFile);
+                                            this.extensions.Add(assembly);
+                                            this.InitializeExtension(assembly);
                                         }
+
+                                        loadedPackageIds.Add(packageId);
 
                                         break;
                                     }
@@ -240,6 +260,48 @@ namespace StoneAssemblies.Extensibility.Services
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// The initialize extension.
+        /// </summary>
+        /// <param name="assembly">
+        /// The assembly.
+        /// </param>
+        private void InitializeExtension(Assembly assembly)
+        {
+            var startupType = assembly.GetTypes().FirstOrDefault(type => type.Name == "Startup");
+            if (startupType != null)
+            {
+                object? startup;
+
+                var constructorInfo = startupType.GetConstructor(new[] { typeof(IConfiguration) });
+                if (constructorInfo != null)
+                {
+                    startup = constructorInfo.Invoke(new object[] { this.configuration });
+                }
+                else
+                {
+                    startup = Activator.CreateInstance(startupType);
+                }
+
+                var configureServiceMethod = startupType.GetMethods(BindingFlags.Public)
+                    .FirstOrDefault(info => info.Name == "ConfigureServices");
+
+                if (configureServiceMethod != null && configureServiceMethod.GetParameters().Length == 1
+                                                   && typeof(IServiceCollection).IsAssignableFrom(
+                                                       configureServiceMethod.GetParameters()[0].ParameterType))
+                {
+                    try
+                    {
+                        configureServiceMethod.Invoke(startup, new object[] { this.serviceCollection });
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e, "Error configuring plugins services");
                     }
                 }
             }
@@ -298,7 +360,7 @@ namespace StoneAssemblies.Extensibility.Services
                 var packageDirectoryName = Path.GetFileNameWithoutExtension(packageFileName);
                 if (!File.Exists(packageFileName))
                 {
-                    using (var packageStream = new FileStream(packageFileName, FileMode.Create, FileAccess.Write))
+                    await using (var packageStream = new FileStream(packageFileName, FileMode.Create, FileAccess.Write))
                     {
                         Log.Information(
                             "Downloading dependency package {PackageId} {PackageVersion}",

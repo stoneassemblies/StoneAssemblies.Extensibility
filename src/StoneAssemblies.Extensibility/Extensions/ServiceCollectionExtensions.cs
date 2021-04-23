@@ -33,7 +33,7 @@ namespace StoneAssemblies.Extensibility.Extensions
             IConfiguration configuration,
             bool load = false)
         {
-            var extensionManager = ExtensionManager.From(configuration);
+            var extensionManager = new ExtensionManager(configuration, serviceCollection);
             serviceCollection.AddSingleton(extensionManager);
             if (load)
             {
