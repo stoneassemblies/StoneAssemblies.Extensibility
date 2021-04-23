@@ -10,6 +10,7 @@ namespace StoneAssemblies.Extensibility.Extensions
     using Microsoft.Extensions.DependencyInjection;
 
     using StoneAssemblies.Extensibility.Services;
+    using StoneAssemblies.Extensibility.Services.Interfaces;
 
     /// <summary>
     ///     The service collection extensions.
