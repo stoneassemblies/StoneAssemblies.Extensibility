@@ -285,7 +285,7 @@ namespace StoneAssemblies.Extensibility.Services
                     startup = Activator.CreateInstance(startupType);
                 }
 
-                var configureServiceMethod = startupType.GetMethods(BindingFlags.Public)
+                var configureServiceMethod = startupType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                     .FirstOrDefault(info => info.Name == "ConfigureServices");
 
                 if (configureServiceMethod != null && configureServiceMethod.GetParameters().Length == 1
