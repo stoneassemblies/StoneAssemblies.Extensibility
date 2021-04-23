@@ -123,25 +123,22 @@ namespace StoneAssemblies.Extensibility.Services
 
             var sources = new List<string>();
             this.configuration.GetSection("Extensions").GetSection("Sources").Bind(sources);
-            if (sources != null)
+            foreach (var source in sources)
             {
-                foreach (var source in sources)
+                var s = source;
+                if (!Uri.TryCreate(s, UriKind.Absolute, out _) && Directory.Exists(s))
                 {
-                    var s = source;
-                    if (!Uri.TryCreate(source, UriKind.Absolute, out _) && Directory.Exists(source))
-                    {
-                        s = Path.GetFullPath(s);
-                    }
+                    s = Path.GetFullPath(s);
+                }
 
-                    try
-                    {
-                        var sourceRepository = Repository.Factory.GetCoreV3(s);
-                        this.sourceRepositories.Add(sourceRepository);
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Error(e, "Error creating source repository");
-                    }
+                try
+                {
+                    var sourceRepository = Repository.Factory.GetCoreV3(s);
+                    this.sourceRepositories.Add(sourceRepository);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "Error creating source repository");
                 }
             }
         }
@@ -487,7 +484,7 @@ namespace StoneAssemblies.Extensibility.Services
         /// <returns>
         ///     The <see cref="Assembly" />.
         /// </returns>
-        private Assembly OnCurrentAppDomainAssemblyResolve(object sender, ResolveEventArgs args)
+        private Assembly OnCurrentAppDomainAssemblyResolve(object? sender, ResolveEventArgs args)
         {
             // TODO: Take in account culture for resource assemblies.
             var fileName = args.Name.Split(',')[0];
