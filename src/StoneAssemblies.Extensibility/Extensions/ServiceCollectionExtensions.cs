@@ -34,7 +34,7 @@ namespace StoneAssemblies.Extensibility.Extensions
             bool load = false)
         {
             var extensionManager = new ExtensionManager(configuration, serviceCollection);
-            serviceCollection.AddSingleton(extensionManager);
+            serviceCollection.AddSingleton<IExtensionManager>(extensionManager);
             if (load)
             {
                 extensionManager.LoadExtensionsAsync().GetAwaiter().GetResult();
