@@ -121,7 +121,8 @@ namespace StoneAssemblies.Extensibility.Services
             AssemblyLoadContext.Default.ResolvingUnmanagedDll += this.OnAssemblyLoadContextResolvingUnmanagedDll;
             AppDomain.CurrentDomain.AssemblyResolve += this.OnCurrentAppDomainAssemblyResolve;
 
-            var sources = configuration.GetSection("Extensions").GetValue<string[]>("Sources");
+            var sources = new List<string>();
+            this.configuration.GetSection("Extensions").GetSection("Sources").Bind(sources);
             if (sources != null)
             {
                 foreach (var source in sources)
