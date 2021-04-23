@@ -66,7 +66,9 @@ namespace StoneAssemblies.Extensibility.Services
         /// </summary>
         private static readonly string[] TargetFrameworkDependencies =
             {
+#if NET5_0_OR_GREATER
                 ".NETCoreApp,Version=v5.0",
+#endif
                 ".NETCoreApp,Version=v3.1",
                 ".NetStandard,Version=v2.1",
                 ".NetStandard,Version=v2.0",
@@ -77,7 +79,9 @@ namespace StoneAssemblies.Extensibility.Services
         /// </summary>
         private static readonly string[] TargetFrameworks =
             {
+#if NET5_0_OR_GREATER
                 "net5.0",
+#endif
                 "netcoreapp3.1",
                 "netstandard2.1",
                 "netstandard2.0",
@@ -322,9 +326,6 @@ namespace StoneAssemblies.Extensibility.Services
         /// <param name="package">
         ///     The package.
         /// </param>
-        /// <param name="resource">
-        ///     The resource.
-        /// </param>
         /// <param name="destination">
         ///     The destination.
         /// </param>
@@ -484,7 +485,7 @@ namespace StoneAssemblies.Extensibility.Services
         /// <returns>
         ///     The <see cref="Assembly" />.
         /// </returns>
-        private Assembly OnCurrentAppDomainAssemblyResolve(object? sender, ResolveEventArgs args)
+        private Assembly? OnCurrentAppDomainAssemblyResolve(object? sender, ResolveEventArgs args)
         {
             // TODO: Take in account culture for resource assemblies.
             var fileName = args.Name.Split(',')[0];

@@ -26,20 +26,18 @@ namespace StoneAssemblies.Extensibility.Extensions
         /// <param name="configuration">
         ///     The configuration.
         /// </param>
-        /// <param name="load">
-        ///     The load.
-        /// </param>
-        public static void AddExtensionManager(
+        /// <returns>
+        ///     The <see cref="IExtensionManager" />.
+        ///     The extension manager.
+        /// </returns>
+        public static IExtensionManager AddExtensions(
             this IServiceCollection serviceCollection,
-            IConfiguration configuration,
-            bool load = false)
+            IConfiguration configuration)
         {
             var extensionManager = new ExtensionManager(configuration, serviceCollection);
             serviceCollection.AddSingleton<IExtensionManager>(extensionManager);
-            if (load)
-            {
-                extensionManager.LoadExtensionsAsync().GetAwaiter().GetResult();
-            }
+            extensionManager.LoadExtensionsAsync().GetAwaiter().GetResult();
+            return extensionManager;
         }
     }
 }
