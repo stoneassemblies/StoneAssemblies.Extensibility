@@ -1,6 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
+		<Description>NuGet based extensibility system for netcore apps.</Description>
+		<PackageTags>nuget;netcore;extensibility</PackageTags>
+		<IsPackable>true</IsPackable>
 	</PropertyGroup>
 
 	<ItemGroup>
