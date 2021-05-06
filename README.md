@@ -31,19 +31,19 @@ Create plugin
 1) Create a class library.
 2) By convention, the extensibility runtime looks for a class named `Startup` to execute the plugin initialization. The `Startup` class should look like this:
 
-    public class Startup
-    {
-        public Startup(IConfiguration configuration)
+        public class Startup
         {
-            this.Configuration = configuration;
-        }
+                public Startup(IConfiguration configuration)
+                {
+                    this.Configuration = configuration;
+                }
 
-        public IConfiguration Configuration { get; }
+                public IConfiguration Configuration { get; }
 
-        public void ConfigureServices(IServiceCollection serviceCollection)
-        {
-            // TODO: Register plugin service here!!
+                public void ConfigureServices(IServiceCollection serviceCollection)
+                {
+                    // TODO: Register plugin service here!!
+                }
         }
-    }
 
 3) Pack and publish the class library as NuGet package in a public or private registry.
