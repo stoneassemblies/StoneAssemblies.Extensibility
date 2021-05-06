@@ -83,9 +83,12 @@ namespace StoneAssemblies.Extensibility.Services
                 "net5.0",
 #endif
                 "netcoreapp3.1",
+                "netcoreapp2.1",
                 "netstandard2.1",
                 "netstandard2.0",
+                "net461",
                 "net46",
+                "net45",
             };
 
         /// <summary>
