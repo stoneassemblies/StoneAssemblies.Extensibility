@@ -99,6 +99,7 @@ Task("Sonar-Begin")
             .Append("sonarscanner")
             .Append("begin")
             .Append($"/k:{SonarProjectKey}")
+            .Append($"/d:sonar.organization={stoneassemblies}")
             .Append($"/d:sonar.host.url={sonarUrl}")
             .Append($"/d:sonar.login={sonarToken}")
       });

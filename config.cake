@@ -10,3 +10,4 @@ string[] ComponentProjects  = new [] {
 };
 
 string SonarProjectKey = "stoneassemblies_StoneAssemblies.Extensibility";
+string SonarOrganization = "stoneassemblies";
