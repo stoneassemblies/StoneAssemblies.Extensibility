@@ -12,3 +12,4 @@ plugins
 packages
 cache
 lib
+/.sonarqube

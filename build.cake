@@ -33,6 +33,8 @@ var nugetApiKey = EnvironmentVariable("NUGET_API_KEY");
 
 var DockerRepositoryPrefix = string.IsNullOrWhiteSpace(dockerRepository) ? string.Empty : dockerRepository + "/";
 
+var sonarToken = EnvironmentVariable("SONAR_TOKEN");
+var sonarUrl = EnvironmentVariable("SONAR_URL") ?? "https://sonarcloud.io/";
 
 Task("UpdateVersion")
   .Does(() => 
@@ -40,21 +42,21 @@ Task("UpdateVersion")
       StartProcess("dotnet", new ProcessSettings
       {
           Arguments = new ProcessArgumentBuilder()
-          .Append("gitversion")
-          .Append("/output")
-          .Append("buildserver")
-          .Append("/nofetch")
-          .Append("/updateassemblyinfo")
+            .Append("gitversion")
+            .Append("/output")
+            .Append("buildserver")
+            .Append("/nofetch")
+            .Append("/updateassemblyinfo")
       });
 
       IEnumerable<string> redirectedStandardOutput;
       StartProcess("dotnet", new ProcessSettings
       {
           Arguments = new ProcessArgumentBuilder()
-          .Append("gitversion")
-          .Append("/output")
-          .Append("json")
-	  .Append("/nofetch"),
+            .Append("gitversion")
+            .Append("/output")
+            .Append("json")
+            .Append("/nofetch"),
           RedirectStandardOutput = true
       }, out redirectedStandardOutput);
 
@@ -87,6 +89,38 @@ Task("Build")
                           .Append($"/p:PackageVersion={NuGetVersionV2}")
                   });
   }); 
+
+Task("Sonar-Begin")
+  .Does(() => 
+  {
+      StartProcess("dotnet", new ProcessSettings
+      {
+          Arguments = new ProcessArgumentBuilder()
+            .Append("sonarscanner")
+            .Append("begin")
+            .Append($"/k:{SonarProjectKey}")
+            .Append($"/d:sonar.host.url={sonarUrl}")
+            .Append($"/d:sonar.login={sonarToken}")
+      });
+  });
+
+Task("Sonar-End")
+  .Does(() => 
+  {
+      StartProcess("dotnet", new ProcessSettings
+      {
+          Arguments = new ProcessArgumentBuilder()
+            .Append("sonarscanner")
+            .Append("end")
+            .Append($"/d:sonar.login={sonarToken}")
+      });
+  });
+
+Task("Sonar")
+  .IsDependentOn("Sonar-Begin")
+  .IsDependentOn("Build")
+  // .IsDependentOn("Run-Unit-Test")
+  .IsDependentOn("Sonar-End");
 
 Task("Publish")
   .IsDependentOn("Build")
@@ -208,7 +242,7 @@ Task("NuGetPush")
 {
 	var nugetFiles  = GetFiles("./output/nuget/*.nupkg");
 	foreach(var nugetFile in nugetFiles)
-        {
+    {
 		DotNetCoreNuGetPush(nugetFile.ToString(), new DotNetCoreNuGetPushSettings {
 		     Source = nugetRepository,
 		     ApiKey = nugetApiKey
