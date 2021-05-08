@@ -9,4 +9,4 @@ string[] ComponentProjects  = new [] {
 	"./src/StoneAssemblies.Extensibility/StoneAssemblies.Extensibility.csproj"
 };
 
-string SonarProjectKey = "StoneAssemblies.Extensibility";
+string SonarProjectKey = "stoneassemblies_StoneAssemblies.Extensibility";
