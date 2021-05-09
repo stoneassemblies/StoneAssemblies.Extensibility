@@ -164,7 +164,12 @@ namespace StoneAssemblies.Extensibility.Services
             var packageIdsFromConfiguration = new List<string>();
             this.configuration.GetSection("Extensions")?.GetSection("Packages")?.Bind(packageIdsFromConfiguration);
 
-            var pendingPackageIds = new List<string>(packageIds);
+            var pendingPackageIds = new List<string>();
+            if (packageIds != null)
+            {
+                pendingPackageIds.AddRange(packageIds);
+            }
+
             pendingPackageIds.AddRange(packageIdsFromConfiguration);
             foreach (var sourceRepository in this.sourceRepositories)
             {

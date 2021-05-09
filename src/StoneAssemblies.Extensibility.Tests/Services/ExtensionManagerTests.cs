@@ -24,33 +24,64 @@ namespace StoneAssemblies.Extensibility.Tests.Services
     public class ExtensionManagerTests
     {
         /// <summary>
-        ///     The load extensions async.
+        /// The the load extensions async tests.
         /// </summary>
-        /// <returns>
-        ///     The <see cref="Task" />.
-        /// </returns>
-        [TestMethod]
-        public async Task LoadPluginsProperlyAsync()
+        [TestClass]
+        public class The_LoadExtensionsAsync_Method
         {
-            var configurationMock = new Mock<IConfiguration>();
-            var serviceCollection = new ServiceCollection();
+            /// <summary>
+            ///     The load extensions async.
+            /// </summary>
+            /// <returns>
+            ///     The <see cref="Task" />.
+            /// </returns>
+            [TestMethod]
+            public async Task Loads_Plugins_Properly_From_Non_Null_List_Of_Extensions_Async()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
 
-            var extensionManager = new ExtensionManager(
-                serviceCollection,
-                configurationMock.Object,
-                new List<string>
-                    {
-                        "../../../../../output/nuget-local/",
-                        "https://api.nuget.org/v3/index.json",
-                    });
+                var extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    new List<string>
+                        {
+                            "../../../../../output/nuget-local/",
+                            "https://api.nuget.org/v3/index.json",
+                        });
 
-            await extensionManager.LoadExtensionsAsync(
-                new List<string>
-                    {
-                        "StoneAssemblies.Extensibility.DemoPlugin",
-                    });
+                await extensionManager.LoadExtensionsAsync(
+                    new List<string>
+                        {
+                            "StoneAssemblies.Extensibility.DemoPlugin",
+                        });
 
-            Assert.AreNotEqual(0, serviceCollection.Count);
+                Assert.AreNotEqual(0, serviceCollection.Count);
+            }
+
+            /// <summary>
+            /// Succeeds even if extension list is null.
+            /// </summary>
+            /// <returns>
+            /// The <see cref="Task"/>.
+            /// </returns>
+            [TestMethod]
+            public async Task Succeeds_Even_If_Extension_List_Is_Null()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    new List<string>
+                        {
+                            "../../../../../output/nuget-local/",
+                            "https://api.nuget.org/v3/index.json",
+                        });
+
+                await extensionManager.LoadExtensionsAsync(null);
+            }
         }
     }
 }
