@@ -6,6 +6,7 @@
 
 namespace StoneAssemblies.Extensibility.Services.Interfaces
 {
+    using System;
     using System.Collections.Generic;
     using System.Reflection;
     using System.Threading.Tasks;
@@ -15,6 +16,11 @@ namespace StoneAssemblies.Extensibility.Services.Interfaces
     /// </summary>
     public interface IExtensionManager
     {
+        /// <summary>
+        ///     Raised when all extensions loading process finished.
+        /// </summary>
+        event EventHandler<EventArgs> Finished;
+
         /// <summary>
         ///     Gets the extension assemblies.
         /// </summary>

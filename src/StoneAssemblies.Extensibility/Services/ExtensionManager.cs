@@ -86,6 +86,11 @@ namespace StoneAssemblies.Extensibility.Services
         private readonly List<SourceRepository> sourceRepositories = new List<SourceRepository>();
 
         /// <summary>
+        ///     Raised when all extensions loading process finished.
+        /// </summary>
+        public event EventHandler<EventArgs> Finished;
+
+        /// <summary>
         ///     Initializes a new instance of the <see cref="ExtensionManager" /> class.
         /// </summary>
         /// <param name="configuration">
@@ -209,6 +214,8 @@ namespace StoneAssemblies.Extensibility.Services
                     }
                 }
             }
+
+            this.OnFinished();
         }
 
         /// <summary>
@@ -322,23 +329,41 @@ namespace StoneAssemblies.Extensibility.Services
             var startupType = assembly.GetTypes().FirstOrDefault(type => type.Name == "Startup");
             if (startupType != null)
             {
-                var constructorInfo = startupType.GetConstructor(new[] { typeof(IConfiguration) });
-                var startup = constructorInfo != null ? constructorInfo.Invoke(new object[] { this.configuration }) : Activator.CreateInstance(startupType);
-
-                var configureServiceMethod = startupType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                    .FirstOrDefault(info => info.Name == "ConfigureServices");
-
-                if (configureServiceMethod != null && configureServiceMethod.GetParameters().Length == 1
-                                                   && typeof(IServiceCollection).IsAssignableFrom(
-                                                       configureServiceMethod.GetParameters()[0].ParameterType))
+                object startup = null;
+                object[] availableParameters = { this.configuration, this };
+                foreach (var c in startupType.GetConstructors())
                 {
-                    try
+                    List<object> parameters = new List<object>();
+                    foreach (var parameterInfo in c.GetParameters())
                     {
-                        configureServiceMethod.Invoke(startup, new object[] { this.serviceCollection });
+                        var parameter = availableParameters.FirstOrDefault(o => parameterInfo.ParameterType.IsInstanceOfType(o));
+                        parameters.Add(parameter);
                     }
-                    catch (Exception e)
+
+                    if (parameters.Count == c.GetParameters().Length)
                     {
-                        Log.Error(e, "Error configuring plugins services");
+                        startup = Activator.CreateInstance(startupType, parameters.ToArray());
+                        break;
+                    }
+                }
+
+                if (startup != null)
+                {
+                    var configureServiceMethod = startupType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                        .FirstOrDefault(info => info.Name == "ConfigureServices");
+
+                    if (configureServiceMethod != null && configureServiceMethod.GetParameters().Length == 1
+                                                       && typeof(IServiceCollection).IsAssignableFrom(
+                                                           configureServiceMethod.GetParameters()[0].ParameterType))
+                    {
+                        try
+                        {
+                            configureServiceMethod.Invoke(startup, new object[] { this.serviceCollection });
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, "Error configuring plugins services");
+                        }
                     }
                 }
             }
@@ -473,6 +498,14 @@ namespace StoneAssemblies.Extensibility.Services
             }
 
             return false;
+        }
+
+        /// <summary>
+        ///     Notifies loading extension process is finished.
+        /// </summary>
+        private void OnFinished()
+        {
+            this.Finished?.Invoke(this, EventArgs.Empty);
         }
     }
 }

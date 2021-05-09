@@ -1,5 +1,5 @@
 // --------------------------------------------------------------------------------------------------------------------
-// <copyright file="ExtensionManagerTests.cs" company="Stone Assemblies">
+// <copyright file="ExtensionManagerFacts.cs" company="Stone Assemblies">
 // Copyright © 2021 - 2021 Stone Assemblies. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
@@ -20,8 +20,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
     /// <summary>
     ///     The extension manager tests.
     /// </summary>
-    [TestClass]
-    public class ExtensionManagerTests
+    public class ExtensionManagerFacts
     {
         /// <summary>
         /// The the load extensions async tests.

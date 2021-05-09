@@ -11,6 +11,8 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
+    using StoneAssemblies.Extensibility.Services.Interfaces;
+
     /// <summary>
     ///     The plugin startup.
     /// </summary>
@@ -21,7 +23,13 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// </summary>
 #pragma warning disable IDE0052 // Remove unread private members
         private readonly IConfiguration configuration;
+
 #pragma warning restore IDE0052 // Remove unread private members
+
+        /// <summary>
+        /// The extension manager.
+        /// </summary>
+        private readonly IExtensionManager extensionManager;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Startup" /> class.
@@ -29,9 +37,13 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// <param name="configuration">
         ///     The configuration.
         /// </param>
-        public Startup(IConfiguration configuration)
+        /// <param name="extensionManager">
+        ///     The extension manager.
+        /// </param>
+        public Startup(IConfiguration configuration, IExtensionManager extensionManager)
         {
             this.configuration = configuration;
+            this.extensionManager = extensionManager;
         }
 
         /// <summary>
@@ -40,11 +52,12 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// <param name="serviceCollection">
         ///     The service collection.
         /// </param>
-#pragma warning disable CA1822 // Mark members as static
         public void ConfigureServices(IServiceCollection serviceCollection)
-#pragma warning restore CA1822 // Mark members as static
         {
-            serviceCollection.AddSingleton(new SqlConnection());
+            this.extensionManager.Finished += (sender, args) =>
+                {
+                    serviceCollection.AddSingleton(new SqlConnection());
+                };
         }
     }
 }

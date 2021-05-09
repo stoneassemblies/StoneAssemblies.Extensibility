@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StoneAssemblies.Extensibili
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{99212B12-D8FC-4858-9D68-CAEF1FF8956F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StoneAssemblies.Extensibility.Tests", "StoneAssemblies.Extensibility.Tests\StoneAssemblies.Extensibility.Tests.csproj", "{B1D24CB8-8D08-41B8-A4E1-7D142CD3AA58}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StoneAssemblies.Extensibility.Tests", "StoneAssemblies.Extensibility.Tests\StoneAssemblies.Extensibility.Tests.csproj", "{B1D24CB8-8D08-41B8-A4E1-7D142CD3AA58}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StoneAssemblies.Extensibility.DemoPlugin", "StoneAssemblies.Extensibility.DemoPlugin\StoneAssemblies.Extensibility.DemoPlugin.csproj", "{0EA1790D-5C7E-4B87-934D-F474CFB0DAA5}"
 EndProject
