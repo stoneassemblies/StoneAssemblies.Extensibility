@@ -4,7 +4,6 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-#nullable enable
 namespace StoneAssemblies.Extensibility.Services
 {
     using System;
@@ -30,6 +29,8 @@ namespace StoneAssemblies.Extensibility.Services
 
     using Serilog;
 
+    using StoneAssemblies.Extensibility.Extensions;
+    using StoneAssemblies.Extensibility.Services.Helpers;
     using StoneAssemblies.Extensibility.Services.Interfaces;
 
     /// <summary>
@@ -53,15 +54,6 @@ namespace StoneAssemblies.Extensibility.Services
         private const string PluginsDirectoryFolderName = "plugins";
 
         /// <summary>
-        ///     The package library directory names.
-        /// </summary>
-        private static readonly string[] PackageLibraryDirectoryNames =
-            {
-                Path.Combine("runtimes", "$(Platform)"),
-                "lib",
-            };
-
-        /// <summary>
         ///     The target framework dependencies.
         /// </summary>
         private static readonly string[] TargetFrameworkDependencies =
@@ -75,23 +67,6 @@ namespace StoneAssemblies.Extensibility.Services
             };
 
         /// <summary>
-        ///     The target frameworks.
-        /// </summary>
-        private static readonly string[] TargetFrameworks =
-            {
-#if NET5_0_OR_GREATER
-                "net5.0",
-#endif
-                "netcoreapp3.1",
-                "netcoreapp2.1",
-                "netstandard2.1",
-                "netstandard2.0",
-                "net461",
-                "net46",
-                "net45",
-            };
-
-        /// <summary>
         ///     The configuration.
         /// </summary>
         private readonly IConfiguration configuration;
@@ -102,14 +77,14 @@ namespace StoneAssemblies.Extensibility.Services
         private readonly List<Assembly> extensions = new List<Assembly>();
 
         /// <summary>
-        ///     The repository.
-        /// </summary>
-        private readonly List<SourceRepository> sourceRepositories = new List<SourceRepository>();
-
-        /// <summary>
         ///     The service collection.
         /// </summary>
         private readonly IServiceCollection serviceCollection;
+
+        /// <summary>
+        ///     The repository.
+        /// </summary>
+        private readonly List<SourceRepository> sourceRepositories = new List<SourceRepository>();
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="ExtensionManager" /> class.
@@ -188,7 +163,7 @@ namespace StoneAssemblies.Extensibility.Services
         /// </returns>
         public async Task LoadExtensionsAsync(List<string> packageIds)
         {
-            SortedSet<string> loadedPackageIds = new SortedSet<string>();
+            var loadedPackageIds = new SortedSet<string>();
             foreach (var sourceRepository in this.sourceRepositories)
             {
                 var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
@@ -200,7 +175,7 @@ namespace StoneAssemblies.Extensibility.Services
                     }
 
                     var packageId = id;
-                    NuGetVersion? packageVersion = null;
+                    NuGetVersion packageVersion = null;
 
                     var packageIdParts = id.Split(':');
                     if (packageIdParts.Length == 2)
@@ -217,52 +192,17 @@ namespace StoneAssemblies.Extensibility.Services
                                            NullLogger.Instance,
                                            CancellationToken.None);
 
-                        packageVersion = versions.ToList().LastOrDefault();
+                        packageVersion = versions.AsEnumerable().LastOrDefault();
                     }
 
                     if (packageVersion != null)
                     {
                         var pluginsDirectoryPath = Path.GetFullPath(PluginsDirectoryFolderName);
-                        await this.DownloadPackageAsync(
-                            new PackageDependency(packageId, new VersionRange(packageVersion)),
-                            pluginsDirectoryPath);
-
-                        var packageDirectoryName = $"{packageId}.{packageVersion.OriginalVersion}";
-                        var pluginDirectoryPath = Path.Combine(pluginsDirectoryPath, packageDirectoryName);
-
-                        // TODO: Update?
-                        foreach (var targetFramework in TargetFrameworks)
+                        var packageDependency = new PackageDependency(packageId, new VersionRange(packageVersion));
+                        await this.DownloadPackageAsync(packageDependency, pluginsDirectoryPath);
+                        if (this.TryLoadPackageAssemblies(packageId, packageVersion, pluginsDirectoryPath))
                         {
-                            var targetFrameworkDirectoryPath = Path.Combine(
-                                pluginDirectoryPath,
-                                "lib",
-                                targetFramework);
-                            if (Directory.Exists(targetFrameworkDirectoryPath))
-                            {
-                                var assemblyFiles = Directory.EnumerateFiles(targetFrameworkDirectoryPath, "*.dll")
-                                    .ToList();
-
-                                if (assemblyFiles.Count > 0)
-                                {
-                                    try
-                                    {
-                                        foreach (var assemblyFile in assemblyFiles)
-                                        {
-                                            var assembly = Assembly.LoadFrom(assemblyFile);
-                                            this.extensions.Add(assembly);
-                                            this.InitializeExtension(assembly);
-                                        }
-
-                                        loadedPackageIds.Add(packageId);
-
-                                        break;
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        Log.Error(ex, "Error loading plugin assembly");
-                                    }
-                                }
-                            }
+                            loadedPackageIds.Add(packageId);
                         }
                     }
                 }
@@ -270,17 +210,116 @@ namespace StoneAssemblies.Extensibility.Services
         }
 
         /// <summary>
-        /// The initialize extension.
+        ///     Downloads the dependencies of the packages.
+        /// </summary>
+        /// <param name="packageFileName">
+        ///     The package file name.
+        /// </param>
+        /// <returns>
+        ///     The <see cref="Task" />.
+        /// </returns>
+        private async Task DownloadDependenciesAsync(string packageFileName)
+        {
+            using var archiveReader = new PackageArchiveReader(packageFileName);
+            foreach (var dependencyGroup in archiveReader.GetPackageDependencies())
+            {
+                if (TargetFrameworkDependencies.Contains(dependencyGroup.TargetFramework.DotNetFrameworkName, StringComparer.InvariantCultureIgnoreCase))
+                {
+                    foreach (var packageDependency in dependencyGroup.Packages)
+                    {
+                        try
+                        {
+                            await this.DownloadPackageAsync(packageDependency, DependenciesDirectoryFolderName);
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, "Error downloading package {PackageId}", packageDependency.Id);
+                        }
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Downloads the package async.
+        /// </summary>
+        /// <param name="package">
+        ///     The package.
+        /// </param>
+        /// <param name="destination">
+        ///     The destination.
+        /// </param>
+        /// <returns>
+        ///     The <see cref="Task" />.
+        /// </returns>
+        private async Task DownloadPackageAsync(PackageDependency package, string destination)
+        {
+            foreach (var sourceRepository in this.sourceRepositories)
+            {
+                var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
+
+                if (!Directory.Exists(CacheDirectoryFolderName))
+                {
+                    Directory.CreateDirectory(CacheDirectoryFolderName);
+                }
+
+                var packageId = package.Id;
+                var packageDependencyVersions = await resource.GetAllVersionsAsync(
+                                                    packageId,
+                                                    new NullSourceCacheContext(),
+                                                    NullLogger.Instance,
+                                                    CancellationToken.None);
+
+                var packageVersion = package.VersionRange.FindBestMatch(packageDependencyVersions);
+                if (packageVersion != null)
+                {
+                    var packageFileName = Path.Combine(CacheDirectoryFolderName, $"{packageId}.{packageVersion.OriginalVersion}.nupkg");
+                    await resource.DownloadPackageAsync(package, packageVersion, packageFileName);
+                    await this.DownloadDependenciesAsync(packageFileName);
+                    this.ExtractPackage(packageFileName, destination);
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Extract package file.
+        /// </summary>
+        /// <param name="packageFileName">
+        ///     The package file name.
+        /// </param>
+        /// <param name="destination">
+        ///     The destination.
+        /// </param>
+        private void ExtractPackage(string packageFileName, string destination)
+        {
+            var packageDirectoryName = Path.GetFileNameWithoutExtension(packageFileName);
+            if (!Directory.Exists(destination))
+            {
+                Directory.CreateDirectory(destination);
+            }
+
+            var packagesDirectoryPath = Path.Combine(destination, packageDirectoryName);
+            if (!Directory.Exists(packagesDirectoryPath))
+            {
+                ZipFile.ExtractToDirectory(packageFileName, packagesDirectoryPath, true);
+            }
+        }
+
+        /// <summary>
+        ///     The initialize extension.
         /// </summary>
         /// <param name="assembly">
-        /// The assembly.
+        ///     The assembly.
         /// </param>
         private void InitializeExtension(Assembly assembly)
         {
             var startupType = assembly.GetTypes().FirstOrDefault(type => type.Name == "Startup");
             if (startupType != null)
             {
-                object? startup;
+                object startup;
 
                 var constructorInfo = startupType.GetConstructor(new[] { typeof(IConfiguration) });
                 if (constructorInfo != null)
@@ -307,119 +346,6 @@ namespace StoneAssemblies.Extensibility.Services
                     {
                         Log.Error(e, "Error configuring plugins services");
                     }
-                }
-            }
-        }
-
-        /// <summary>
-        ///     Gets the runtime id.
-        /// </summary>
-        /// <returns>
-        ///     The runtime id.
-        /// </returns>
-        private static string GetRuntimeId()
-        {
-            //// TODO: Add runtime ids if required.
-            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win" : "unix";
-        }
-
-        /// <summary>
-        ///     Downloads the package async.
-        /// </summary>
-        /// <param name="package">
-        ///     The package.
-        /// </param>
-        /// <param name="destination">
-        ///     The destination.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="Task" />.
-        /// </returns>
-        private async Task DownloadPackageAsync(
-            PackageDependency package,
-            string destination)
-        {
-            foreach (var sourceRepository in this.sourceRepositories)
-            {
-                var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
-
-                var packageId = package.Id;
-                var packageDependencyVersions = await resource.GetAllVersionsAsync(
-                                                    packageId,
-                                                    new NullSourceCacheContext(),
-                                                    NullLogger.Instance,
-                                                    CancellationToken.None);
-
-                var packageVersion = package.VersionRange.FindBestMatch(packageDependencyVersions);
-                if (packageVersion != null)
-                {
-                    if (!Directory.Exists(CacheDirectoryFolderName))
-                    {
-                        Directory.CreateDirectory(CacheDirectoryFolderName);
-                    }
-
-                    var packageFileName = Path.Combine(
-                        CacheDirectoryFolderName,
-                        $"{packageId}.{packageVersion.OriginalVersion}.nupkg");
-                    var packageDirectoryName = Path.GetFileNameWithoutExtension(packageFileName);
-                    if (!File.Exists(packageFileName))
-                    {
-                        await using (var packageStream = new FileStream(packageFileName, FileMode.Create, FileAccess.Write))
-                        {
-                            Log.Information(
-                                "Downloading dependency package {PackageId} {PackageVersion}",
-                                packageId,
-                                packageVersion.OriginalVersion);
-
-                            await resource.CopyNupkgToStreamAsync(
-                                packageId,
-                                packageVersion,
-                                packageStream,
-                                new NullSourceCacheContext(),
-                                NullLogger.Instance,
-                                CancellationToken.None);
-                        }
-                    }
-
-                    using (var archiveReader = new PackageArchiveReader(packageFileName))
-                    {
-                        foreach (var dependencyGroup in archiveReader.GetPackageDependencies())
-                        {
-                            if (TargetFrameworkDependencies.Contains(
-                                dependencyGroup.TargetFramework.DotNetFrameworkName,
-                                StringComparer.InvariantCultureIgnoreCase))
-                            {
-                                foreach (var packageDependency in dependencyGroup.Packages)
-                                {
-                                    try
-                                    {
-                                        await this.DownloadPackageAsync(
-                                            packageDependency,
-                                            DependenciesDirectoryFolderName);
-                                    }
-                                    catch (Exception e)
-                                    {
-                                        Log.Error(e, "Error downloading package {PackageId}", packageDependency.Id);
-                                    }
-                                }
-
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!Directory.Exists(destination))
-                    {
-                        Directory.CreateDirectory(destination);
-                    }
-
-                    var packagesDirectoryPath = Path.Combine(destination, packageDirectoryName);
-                    if (!Directory.Exists(packagesDirectoryPath))
-                    {
-                        ZipFile.ExtractToDirectory(packageFileName, packagesDirectoryPath, true);
-                    }
-
-                    break;
                 }
             }
         }
@@ -488,69 +414,54 @@ namespace StoneAssemblies.Extensibility.Services
         /// <returns>
         ///     The <see cref="Assembly" />.
         /// </returns>
-        private Assembly? OnCurrentAppDomainAssemblyResolve(object? sender, ResolveEventArgs args)
+        private Assembly OnCurrentAppDomainAssemblyResolve(object sender, ResolveEventArgs args)
         {
-            // TODO: Take in account culture for resource assemblies.
-            var fileName = args.Name.Split(',')[0];
-            var dependencyDirectoryFullPath = Path.GetFullPath(DependenciesDirectoryFolderName);
-            var packageDirectories = Directory
-                .EnumerateFiles(dependencyDirectoryFullPath, fileName + ".dll", SearchOption.AllDirectories).GroupBy(
-                    f => f.Substring(0, f.IndexOf(Path.DirectorySeparatorChar, dependencyDirectoryFullPath.Length + 1)))
-                .ToList();
-
-            foreach (var grouping in packageDirectories)
+            if (!string.IsNullOrWhiteSpace(args?.Name))
             {
-                var packageDirectory = grouping.Key;
-                foreach (var directoryName in PackageLibraryDirectoryNames)
-                {
-                    var packageLibraryDirectoryName = directoryName.Replace("$(Platform)", GetRuntimeId());
-                    var packageLibraryDirectoryPath = Path.Combine(packageDirectory, packageLibraryDirectoryName);
-                    if (Directory.Exists(packageLibraryDirectoryPath))
-                    {
-                        var assemblyFiles = Directory.EnumerateFiles(
-                            packageLibraryDirectoryPath,
-                            fileName + ".dll",
-                            SearchOption.AllDirectories).ToList();
+                var fileName = args.Name.Split(',')[0];
+                var directoryPath = Path.GetFullPath(DependenciesDirectoryFolderName);
+                return AssemblyLoader.LoadAssemblyFrom(directoryPath, fileName);
+            }
 
-                        foreach (var targetFramework in TargetFrameworks)
+            return null;
+        }
+
+        private bool TryLoadPackageAssemblies(
+            string packageId,
+            NuGetVersion packageVersion,
+            string pluginsDirectoryPath)
+        {
+            var packageDirectoryName = $"{packageId}.{packageVersion.OriginalVersion}";
+            var pluginDirectoryPath = Path.Combine(pluginsDirectoryPath, packageDirectoryName);
+
+            foreach (var targetFramework in AssemblyLoader.TargetFrameworks)
+            {
+                var targetFrameworkDirectoryPath = Path.Combine(pluginDirectoryPath, "lib", targetFramework);
+                if (Directory.Exists(targetFrameworkDirectoryPath))
+                {
+                    var assemblyFiles = Directory.EnumerateFiles(targetFrameworkDirectoryPath, "*.dll").ToList();
+                    if (assemblyFiles.Count > 0)
+                    {
+                        try
                         {
                             foreach (var assemblyFile in assemblyFiles)
                             {
-                                try
-                                {
-                                    Log.Information(
-                                        "Loading assembly '{AssemblyName}' from {AssemblyFile}",
-                                        args.Name,
-                                        assemblyFile);
-
-                                    if (assemblyFile.Contains(
-                                        $"{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}"))
-                                    {
-                                        var assembly = Assembly.LoadFrom(assemblyFile);
-
-                                        Log.Information(
-                                            "Assembly '{AssemblyName}' was loaded successfully from '{AssemblyFile} ",
-                                            args.Name,
-                                            assemblyFile);
-
-                                        return assembly;
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    Log.Warning(
-                                        ex,
-                                        "Error loading assembly '{AssemblyName}' file {AssemblyFile}",
-                                        args.Name,
-                                        assemblyFile);
-                                }
+                                var assembly = Assembly.Load(assemblyFile);
+                                this.extensions.Add(assembly);
+                                this.InitializeExtension(assembly);
                             }
+
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "Error loading plugin assembly");
                         }
                     }
                 }
             }
 
-            return null;
+            return false;
         }
     }
 }
