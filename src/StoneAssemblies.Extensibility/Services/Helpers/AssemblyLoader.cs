@@ -172,7 +172,6 @@ namespace StoneAssemblies.Extensibility.Services.Helpers
         /// </returns>
         private static string GetRuntimeId()
         {
-            //// TODO: Add runtime ids if required.
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win" : "unix";
         }
     }
