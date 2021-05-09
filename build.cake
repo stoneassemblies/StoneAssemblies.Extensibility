@@ -118,7 +118,7 @@ Task("Test")
           Configuration = buildConfiguration
         };
 
-      settings.Collectors.Add("XPlat Code Coverage");
+      settings.Collectors.Add("Code Coverage");
       DotNetCoreTest(TestProject, settings);	
     }
   });
@@ -133,6 +133,7 @@ Task("Sonar-Begin")
             .Append("begin")
             .Append($"/k:{SonarProjectKey}")
             .Append($"/o:{SonarOrganization}")
+            .Append($"/sonar.cs.vscoveragexml.reportsPaths=src/StoneAssemblies.Extensibility.Tests/TestResults/*.coveragexml")
             .Append($"/d:sonar.host.url={sonarUrl}")
             .Append($"/d:sonar.login={sonarToken}")
       });
