@@ -152,19 +152,6 @@ namespace StoneAssemblies.Extensibility.Services
         }
 
         /// <summary>
-        ///     Loads the extensions.
-        /// </summary>
-        /// <returns>
-        ///     The <see cref="Task" />.
-        /// </returns>
-        public async Task LoadExtensionsAsync()
-        {
-            var packageIds = new List<string>();
-            this.configuration.GetSection("Extensions").GetSection("Packages").Bind(packageIds);
-            await this.LoadExtensionsAsync(packageIds);
-        }
-
-        /// <summary>
         ///     Loads the extensions from package ids.
         /// </summary>
         /// <param name="packageIds">
@@ -175,7 +162,11 @@ namespace StoneAssemblies.Extensibility.Services
         /// </returns>
         public async Task LoadExtensionsAsync(List<string> packageIds)
         {
+            var packageIdsFromConfiguration = new List<string>();
+            this.configuration.GetSection("Extensions")?.GetSection("Packages")?.Bind(packageIdsFromConfiguration);
+
             var pendingPackageIds = new List<string>(packageIds);
+            pendingPackageIds.AddRange(packageIdsFromConfiguration);
             foreach (var sourceRepository in this.sourceRepositories)
             {
                 if (pendingPackageIds.Count == 0)

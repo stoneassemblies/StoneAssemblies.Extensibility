@@ -6,6 +6,8 @@
 
 namespace StoneAssemblies.Extensibility.Extensions
 {
+    using System.Collections.Generic;
+
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
@@ -26,17 +28,25 @@ namespace StoneAssemblies.Extensibility.Extensions
         /// <param name="configuration">
         ///     The configuration.
         /// </param>
+        /// <param name="packages">
+        ///     The packages.
+        /// </param>
+        /// <param name="packageSources">
+        ///     The package sources.
+        /// </param>
         /// <returns>
         ///     The <see cref="IExtensionManager" />.
         ///     The extension manager.
         /// </returns>
         public static IExtensionManager AddExtensions(
             this IServiceCollection serviceCollection,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            List<string> packages = null,
+            List<string> packageSources = null)
         {
-            var extensionManager = new ExtensionManager(configuration, serviceCollection);
+            var extensionManager = new ExtensionManager(configuration, serviceCollection, packageSources);
             serviceCollection.AddSingleton<IExtensionManager>(extensionManager);
-            extensionManager.LoadExtensionsAsync().GetAwaiter().GetResult();
+            extensionManager.LoadExtensionsAsync(packages).GetAwaiter().GetResult();
             return extensionManager;
         }
     }
