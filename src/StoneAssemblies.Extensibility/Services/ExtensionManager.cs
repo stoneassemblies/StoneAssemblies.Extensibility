@@ -99,8 +99,8 @@ namespace StoneAssemblies.Extensibility.Services
         ///     The package sources.
         /// </param>
         public ExtensionManager(
-            IConfiguration configuration,
             IServiceCollection serviceCollection,
+            IConfiguration configuration,
             List<string> packageSources = null)
         {
             this.configuration = configuration;
@@ -110,7 +110,7 @@ namespace StoneAssemblies.Extensibility.Services
             AppDomain.CurrentDomain.AssemblyResolve += this.OnCurrentAppDomainAssemblyResolve;
 
             var sources = new List<string>();
-            this.configuration.GetSection("Extensions")?.GetSection("Sources")?.Bind(sources);
+            this.configuration?.GetSection("Extensions")?.GetSection("Sources")?.Bind(sources);
 
             if (packageSources != null)
             {

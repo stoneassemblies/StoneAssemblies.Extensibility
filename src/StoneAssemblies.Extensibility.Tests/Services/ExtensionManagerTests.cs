@@ -1,3 +1,9 @@
+// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ExtensionManagerTests.cs" company="Stone Assemblies">
+//     Copyright © 2021 - 2021 Stone Assemblies. All rights reserved.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
 namespace StoneAssemblies.Extensibility.Tests.Services
 {
     using System.Collections.Generic;
@@ -30,18 +36,18 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             var serviceCollection = new ServiceCollection();
 
             var extensionManager = new ExtensionManager(
-                configurationMock.Object,
                 serviceCollection,
+                configurationMock.Object,
                 new List<string>
                     {
                         "../../../../../output/nuget-local/",
-                        "https://api.nuget.org/v3/index.json",
+                        "https://api.nuget.org/v3/index.json"
                     });
 
             await extensionManager.LoadExtensionsAsync(
                 new List<string>
                     {
-                        "StoneAssemblies.Extensibility.DemoPlugin",
+                        "StoneAssemblies.Extensibility.DemoPlugin"
                     });
 
             Assert.AreNotEqual(0, serviceCollection.Count);

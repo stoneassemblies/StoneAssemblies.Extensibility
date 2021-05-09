@@ -44,7 +44,7 @@ namespace StoneAssemblies.Extensibility.Extensions
             List<string> packages = null,
             List<string> packageSources = null)
         {
-            var extensionManager = new ExtensionManager(configuration, serviceCollection, packageSources);
+            var extensionManager = new ExtensionManager(serviceCollection, configuration, packageSources);
             serviceCollection.AddSingleton<IExtensionManager>(extensionManager);
             extensionManager.LoadExtensionsAsync(packages).GetAwaiter().GetResult();
             return extensionManager;
