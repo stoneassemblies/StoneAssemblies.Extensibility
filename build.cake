@@ -138,6 +138,7 @@ Task("Sonar-Begin")
             .Append($"/k:{SonarProjectKey}")
             .Append($"/o:{SonarOrganization}")
             .Append($"/d:sonar.cs.opencover.reportsPaths={coverageFilePath}")
+            .Append($"/d:sonar.projectVersion={coverageFilePath}")
             .Append($"/d:sonar.host.url={sonarUrl}")
             .Append($"/d:sonar.login={sonarToken}")
       });
