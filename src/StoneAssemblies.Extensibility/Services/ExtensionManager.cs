@@ -1,6 +1,6 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
 // <copyright file="ExtensionManager.cs" company="Stone Assemblies">
-// Copyright © 2021 - 2021 Stone Assemblies. All rights reserved.
+//     Copyright © 2021 - 2021 Stone Assemblies. All rights reserved.
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
@@ -9,7 +9,6 @@ namespace StoneAssemblies.Extensibility.Services
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.IO.Compression;
     using System.Linq;
     using System.Reflection;
     using System.Runtime.InteropServices;
