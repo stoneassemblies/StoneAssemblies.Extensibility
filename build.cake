@@ -119,6 +119,7 @@ Task("Test")
         };
 
       settings.Collectors.Add("Code Coverage");
+      settings.Collectors.Add("XPlat Code Coverage");
       DotNetCoreTest(TestProject, settings);	
     }
   });
@@ -133,7 +134,7 @@ Task("Sonar-Begin")
             .Append("begin")
             .Append($"/k:{SonarProjectKey}")
             .Append($"/o:{SonarOrganization}")
-            .Append($"/d:sonar.cs.vscoveragexml.reportsPaths=src/StoneAssemblies.Extensibility.Tests/TestResults/*.coveragexml")
+            .Append($"/d:sonar.flex.cobertura.reportPaths=src/StoneAssemblies.Extensibility.Tests/TestResults/*/coverage.cobertura.xml")
             .Append($"/d:sonar.host.url={sonarUrl}")
             .Append($"/d:sonar.login={sonarToken}")
       });
