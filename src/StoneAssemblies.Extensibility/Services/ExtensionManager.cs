@@ -86,11 +86,6 @@ namespace StoneAssemblies.Extensibility.Services
         private readonly List<SourceRepository> sourceRepositories = new List<SourceRepository>();
 
         /// <summary>
-        ///     Raised when all extensions loading process finished.
-        /// </summary>
-        public event EventHandler<EventArgs> Finished;
-
-        /// <summary>
         ///     Initializes a new instance of the <see cref="ExtensionManager" /> class.
         /// </summary>
         /// <param name="configuration">
@@ -140,6 +135,11 @@ namespace StoneAssemblies.Extensibility.Services
                 }
             }
         }
+
+        /// <summary>
+        ///     Raised when all extensions loading process finished.
+        /// </summary>
+        public event EventHandler<EventArgs> Finished;
 
         /// <summary>
         ///     Gets the extension assemblies.
@@ -319,57 +319,6 @@ namespace StoneAssemblies.Extensibility.Services
         }
 
         /// <summary>
-        ///     The initialize extension.
-        /// </summary>
-        /// <param name="assembly">
-        ///     The assembly.
-        /// </param>
-        private void InitializeExtension(Assembly assembly)
-        {
-            var startupType = assembly.GetTypes().FirstOrDefault(type => type.Name == "Startup");
-            if (startupType != null)
-            {
-                object startup = null;
-                object[] availableParameters = { this.configuration, this };
-                foreach (var constructorInfo in startupType.GetConstructors())
-                {
-                    List<object> parameters = new List<object>();
-                    foreach (var parameterInfo in constructorInfo.GetParameters())
-                    {
-                        var parameter = availableParameters.FirstOrDefault(o => parameterInfo.ParameterType.IsInstanceOfType(o));
-                        parameters.Add(parameter);
-                    }
-
-                    if (parameters.Count == constructorInfo.GetParameters().Length)
-                    {
-                        startup = Activator.CreateInstance(startupType, parameters.ToArray());
-                        break;
-                    }
-                }
-
-                if (startup != null)
-                {
-                    var configureServiceMethod = startupType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                        .FirstOrDefault(info => info.Name == "ConfigureServices");
-
-                    if (configureServiceMethod != null && configureServiceMethod.GetParameters().Length == 1
-                                                       && typeof(IServiceCollection).IsAssignableFrom(
-                                                           configureServiceMethod.GetParameters()[0].ParameterType))
-                    {
-                        try
-                        {
-                            configureServiceMethod.Invoke(startup, new object[] { this.serviceCollection });
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e, "Error configuring plugins services");
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         ///     Called on assembly load context resolving unmanaged library.
         /// </summary>
         /// <param name="assembly">
@@ -484,7 +433,7 @@ namespace StoneAssemblies.Extensibility.Services
                                 var assembly = Assembly.LoadFrom(assemblyFile);
 #pragma warning restore S3885 // "Assembly.Load" should be used
                                 this.extensions.Add(assembly);
-                                this.InitializeExtension(assembly);
+                                assembly.InitializeExtension(this.serviceCollection, this.configuration, this);
                             }
 
                             return true;
