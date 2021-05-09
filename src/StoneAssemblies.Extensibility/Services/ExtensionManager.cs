@@ -179,14 +179,15 @@ namespace StoneAssemblies.Extensibility.Services
                     var packageId = pendingPackageIds[idx];
                     NuGetVersion packageVersion = null;
 
+                    bool parsed = false;
                     var packageIdParts = packageId.Split(':');
                     if (packageIdParts.Length == 2)
                     {
                         packageId = packageIdParts[0];
-                        NuGetVersion.TryParse(packageIdParts[1], out packageVersion);
+                        parsed = NuGetVersion.TryParse(packageIdParts[1], out packageVersion);
                     }
 
-                    if (packageVersion == null)
+                    if (!parsed)
                     {
                         var versions = await resource.GetAllVersionsAsync(
                                            packageId,
@@ -449,7 +450,9 @@ namespace StoneAssemblies.Extensibility.Services
                         {
                             foreach (var assemblyFile in assemblyFiles)
                             {
+#pragma warning disable S3885 // "Assembly.Load" should be used
                                 var assembly = Assembly.LoadFrom(assemblyFile);
+#pragma warning restore S3885 // "Assembly.Load" should be used
                                 this.extensions.Add(assembly);
                                 this.InitializeExtension(assembly);
                             }

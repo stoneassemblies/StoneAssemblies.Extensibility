@@ -41,13 +41,13 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 new List<string>
                     {
                         "../../../../../output/nuget-local/",
-                        "https://api.nuget.org/v3/index.json"
+                        "https://api.nuget.org/v3/index.json",
                     });
 
             await extensionManager.LoadExtensionsAsync(
                 new List<string>
                     {
-                        "StoneAssemblies.Extensibility.DemoPlugin"
+                        "StoneAssemblies.Extensibility.DemoPlugin",
                     });
 
             Assert.AreNotEqual(0, serviceCollection.Count);
