@@ -19,7 +19,9 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// <summary>
         ///     The configuration.
         /// </summary>
+#pragma warning disable IDE0052 // Remove unread private members
         private readonly IConfiguration configuration;
+#pragma warning restore IDE0052 // Remove unread private members
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Startup" /> class.
@@ -38,7 +40,9 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// <param name="serviceCollection">
         ///     The service collection.
         /// </param>
+#pragma warning disable CA1822 // Mark members as static
         public void ConfigureServices(IServiceCollection serviceCollection)
+#pragma warning restore CA1822 // Mark members as static
         {
             serviceCollection.AddSingleton(new SqlConnection());
         }
