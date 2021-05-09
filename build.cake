@@ -118,18 +118,20 @@ Task("Test")
           Configuration = buildConfiguration,
           ArgumentCustomization = args => args
             .Append("/p:CollectCoverage=true")
-            .Append("/p:CoverletOutputFormat=opencover"),
+            .Append("/p:CoverletOutputFormat=opencover")
         };
 
+      settings.Loggers.Add($"trx;LogFileName={TestResultFilePath}");
       settings.Collectors.Add("XPlat Code Coverage");
+
       DotNetCoreTest(TestProject, settings);	
     }
   });
 
 Task("Sonar-Begin")
+  .IsDependentOn("UpdateVersion")
   .Does(() => 
   {
-      var coverageFilePath = System.IO.Path.GetFullPath("src/StoneAssemblies.Extensibility.Tests/coverage.opencover.xml");
       StartProcess("dotnet", new ProcessSettings
       {
           Arguments = new ProcessArgumentBuilder()
@@ -138,7 +140,8 @@ Task("Sonar-Begin")
             .Append($"/k:{SonarProjectKey}")
             .Append($"/o:{SonarOrganization}")
             .Append($"/v:{NuGetVersionV2}")
-            .Append($"/d:sonar.cs.opencover.reportsPaths={coverageFilePath}")
+            .Append($"/d:sonar.cs.opencover.reportsPaths={CoverageFilePath}")
+            .Append($"/d:sonar.cs.vstest.reportsPaths={TestResultFilePath}")
             .Append($"/d:sonar.host.url={sonarUrl}")
             .Append($"/d:sonar.login={sonarToken}")
       });

@@ -15,3 +15,4 @@ lib
 /.sonarqube
 /src/StoneAssemblies.Extensibility.Tests/coverage.opencover.xml
 /src/StoneAssemblies.Extensibility.Tests/TestResults
+/src/StoneAssemblies.Extensibility.Tests/*.trx
