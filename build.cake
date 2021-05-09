@@ -129,6 +129,7 @@ Task("Test")
 Task("Sonar-Begin")
   .Does(() => 
   {
+      var coverageFilePath = System.IO.Path.GetFullPath("src/StoneAssemblies.Extensibility.Tests/coverage.opencover.xml");
       StartProcess("dotnet", new ProcessSettings
       {
           Arguments = new ProcessArgumentBuilder()
@@ -136,7 +137,7 @@ Task("Sonar-Begin")
             .Append("begin")
             .Append($"/k:{SonarProjectKey}")
             .Append($"/o:{SonarOrganization}")
-            .Append($"/d:sonar.cs.opencover.reportsPaths=src/StoneAssemblies.Extensibility.Tests/coverage.opencover.xml")
+            .Append($"/d:sonar.cs.opencover.reportsPaths={coverageFilePath}")
             .Append($"/d:sonar.host.url={sonarUrl}")
             .Append($"/d:sonar.login={sonarToken}")
       });
