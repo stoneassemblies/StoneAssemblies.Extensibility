@@ -118,6 +118,7 @@ Task("Test")
           Configuration = buildConfiguration
         };
 
+      settings.Collectors.Add("XPlat Code Coverage");
       DotNetCoreTest(TestProject, settings);	
     }
   });
