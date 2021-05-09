@@ -10,7 +10,7 @@ namespace StoneAssemblies.Extensibility.Services.Helpers
     using System.IO.Compression;
 
     /// <summary>
-    /// The package helper.
+    ///     The package helper.
     /// </summary>
     public static class PackageFile
     {

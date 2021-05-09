@@ -115,10 +115,12 @@ Task("Test")
     {
       var settings = new DotNetCoreTestSettings
         {
-          Configuration = buildConfiguration
+          Configuration = buildConfiguration,
+          ArgumentCustomization = args => args
+            .Append("/p:CollectCoverage=true")
+            .Append("/p:CoverletOutputFormat=opencover"),
         };
 
-      // settings.Collectors.Add("Code Coverage");
       settings.Collectors.Add("XPlat Code Coverage");
       DotNetCoreTest(TestProject, settings);	
     }
@@ -134,7 +136,7 @@ Task("Sonar-Begin")
             .Append("begin")
             .Append($"/k:{SonarProjectKey}")
             .Append($"/o:{SonarOrganization}")
-            .Append($"/d:sonar.cs.opencover.reportsPaths=src/StoneAssemblies.Extensibility.Tests/TestResults/*/coverage.cobertura.xml")
+            .Append($"/d:sonar.cs.opencover.reportsPaths=./src/StoneAssemblies.Extensibility.Tests/coverage.opencover.xml")
             .Append($"/d:sonar.host.url={sonarUrl}")
             .Append($"/d:sonar.login={sonarToken}")
       });

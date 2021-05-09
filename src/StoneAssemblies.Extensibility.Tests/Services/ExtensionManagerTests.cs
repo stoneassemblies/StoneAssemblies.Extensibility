@@ -35,7 +35,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 new List<string>
                     {
                         "../../../../../output/nuget-local/",
-                        "https://api.nuget.org/v3/index.json",
+                        // "http://localhost:8081/repository/nuget-all/",
+						"https://api.nuget.org/v3/index.json",
                     });
 
             await extensionManager.LoadExtensionsAsync(

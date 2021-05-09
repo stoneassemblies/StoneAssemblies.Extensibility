@@ -310,7 +310,6 @@ namespace StoneAssemblies.Extensibility.Services
                     await resource.DownloadPackageAsync(package, packageVersion, packageFileName);
                     await this.DownloadDependenciesAsync(packageFileName);
                     PackageFile.ExtractToDirectory(packageFileName, destination);
-
                     break;
                 }
             }
