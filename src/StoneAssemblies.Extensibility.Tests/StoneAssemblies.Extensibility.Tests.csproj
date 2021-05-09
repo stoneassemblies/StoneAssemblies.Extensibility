@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="coverage.opencover.xml" />
     <None Remove="TestResults.trx" />
   </ItemGroup>
 
