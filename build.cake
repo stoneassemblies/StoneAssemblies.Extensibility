@@ -134,7 +134,7 @@ Task("Sonar-Begin")
             .Append("begin")
             .Append($"/k:{SonarProjectKey}")
             .Append($"/o:{SonarOrganization}")
-            .Append($"/d:sonar.flex.cobertura.reportPaths=src/StoneAssemblies.Extensibility.Tests/TestResults/*/coverage.cobertura.xml")
+            .Append($"/d:sonar.cs.opencover.reportsPaths=src/StoneAssemblies.Extensibility.Tests/TestResults/*/coverage.cobertura.xml")
             .Append($"/d:sonar.host.url={sonarUrl}")
             .Append($"/d:sonar.login={sonarToken}")
       });
