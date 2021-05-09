@@ -117,7 +117,7 @@ namespace StoneAssemblies.Extensibility.Extensions
 
                     if (parameters.Count == constructorInfo.GetParameters().Length)
                     {
-                        startup = Activator.CreateInstance(startupType, parameters.ToArray());
+                        startup = constructorInfo.Invoke(startupType, parameters.ToArray());
                         break;
                     }
                 }
