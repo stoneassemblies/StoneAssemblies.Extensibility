@@ -331,16 +331,16 @@ namespace StoneAssemblies.Extensibility.Services
             {
                 object startup = null;
                 object[] availableParameters = { this.configuration, this };
-                foreach (var c in startupType.GetConstructors())
+                foreach (var constructorInfo in startupType.GetConstructors())
                 {
                     List<object> parameters = new List<object>();
-                    foreach (var parameterInfo in c.GetParameters())
+                    foreach (var parameterInfo in constructorInfo.GetParameters())
                     {
                         var parameter = availableParameters.FirstOrDefault(o => parameterInfo.ParameterType.IsInstanceOfType(o));
                         parameters.Add(parameter);
                     }
 
-                    if (parameters.Count == c.GetParameters().Length)
+                    if (parameters.Count == constructorInfo.GetParameters().Length)
                     {
                         startup = Activator.CreateInstance(startupType, parameters.ToArray());
                         break;

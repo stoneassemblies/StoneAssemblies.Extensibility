@@ -6,6 +6,7 @@
 
 namespace StoneAssemblies.Extensibility.Tests.Services
 {
+    using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
 
@@ -79,7 +80,14 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                             "https://api.nuget.org/v3/index.json",
                         });
 
-                await extensionManager.LoadExtensionsAsync(null);
+                try
+                {
+                    await extensionManager.LoadExtensionsAsync(null);
+                }
+                catch (Exception)
+                {
+                    Assert.Fail();
+                }
             }
         }
     }
