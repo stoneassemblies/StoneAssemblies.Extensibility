@@ -12,16 +12,16 @@ namespace StoneAssemblies.Extensibility.Tests.Services
     using StoneAssemblies.Extensibility.Services;
 
     /// <summary>
-    /// The extension manager tests.
+    ///     The extension manager tests.
     /// </summary>
     [TestClass]
     public class ExtensionManagerTests
     {
         /// <summary>
-        /// The load extensions async.
+        ///     The load extensions async.
         /// </summary>
         /// <returns>
-        /// The <see cref="Task"/>.
+        ///     The <see cref="Task" />.
         /// </returns>
         [TestMethod]
         public async Task LoadPluginsProperlyAsync()
@@ -35,8 +35,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 new List<string>
                     {
                         "../../../../../output/nuget-local/",
-                        // "http://localhost:8081/repository/nuget-all/",
-						"https://api.nuget.org/v3/index.json",
+                        "https://api.nuget.org/v3/index.json",
                     });
 
             await extensionManager.LoadExtensionsAsync(
