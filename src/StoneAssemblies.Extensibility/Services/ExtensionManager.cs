@@ -316,7 +316,6 @@ namespace StoneAssemblies.Extensibility.Services
             }
         }
 
-
         /// <summary>
         ///     The initialize extension.
         /// </summary>
