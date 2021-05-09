@@ -163,21 +163,21 @@ namespace StoneAssemblies.Extensibility.Services
         /// </returns>
         public async Task LoadExtensionsAsync(List<string> packageIds)
         {
-            var loadedPackageIds = new SortedSet<string>();
+            var pendingPackageIds = new List<string>(packageIds);
             foreach (var sourceRepository in this.sourceRepositories)
             {
-                var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
-                foreach (var id in packageIds)
+                if (pendingPackageIds.Count == 0)
                 {
-                    if (loadedPackageIds.Contains(id))
-                    {
-                        break;
-                    }
+                    break;
+                }
 
-                    var packageId = id;
+                var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
+                for (var idx = pendingPackageIds.Count - 1; idx >= 0; idx--)
+                {
+                    var packageId = pendingPackageIds[idx];
                     NuGetVersion packageVersion = null;
 
-                    var packageIdParts = id.Split(':');
+                    var packageIdParts = packageId.Split(':');
                     if (packageIdParts.Length == 2)
                     {
                         packageId = packageIdParts[0];
@@ -195,18 +195,32 @@ namespace StoneAssemblies.Extensibility.Services
                         packageVersion = versions.AsEnumerable().LastOrDefault();
                     }
 
-                    if (packageVersion != null)
+                    if (await this.TryLoadExtensionsPackageAsync(packageId, packageVersion))
                     {
-                        var pluginsDirectoryPath = Path.GetFullPath(PluginsDirectoryFolderName);
-                        var packageDependency = new PackageDependency(packageId, new VersionRange(packageVersion));
-                        await this.DownloadPackageAsync(packageDependency, pluginsDirectoryPath);
-                        if (this.TryLoadPackageAssemblies(packageId, packageVersion, pluginsDirectoryPath))
-                        {
-                            loadedPackageIds.Add(packageId);
-                        }
+                        pendingPackageIds.RemoveAt(idx);
                     }
                 }
             }
+        }
+
+        /// <summary>
+        ///     Try load package.
+        /// </summary>
+        /// <param name="packageId">
+        ///     The package id.
+        /// </param>
+        /// <param name="packageVersion">
+        ///     The package version.
+        /// </param>
+        /// <returns>
+        ///     The <see cref="Task" />.
+        /// </returns>
+        private async Task<bool> TryLoadExtensionsPackageAsync(string packageId, NuGetVersion packageVersion)
+        {
+            var pluginsDirectoryPath = Path.GetFullPath(PluginsDirectoryFolderName);
+            var packageDependency = new PackageDependency(packageId, new VersionRange(packageVersion));
+            await this.DownloadPackageAsync(packageDependency, pluginsDirectoryPath);
+            return this.TryLoadPackageAssemblies(packageId, packageVersion, pluginsDirectoryPath);
         }
 
         /// <summary>
@@ -319,17 +333,8 @@ namespace StoneAssemblies.Extensibility.Services
             var startupType = assembly.GetTypes().FirstOrDefault(type => type.Name == "Startup");
             if (startupType != null)
             {
-                object startup;
-
                 var constructorInfo = startupType.GetConstructor(new[] { typeof(IConfiguration) });
-                if (constructorInfo != null)
-                {
-                    startup = constructorInfo.Invoke(new object[] { this.configuration });
-                }
-                else
-                {
-                    startup = Activator.CreateInstance(startupType);
-                }
+                var startup = constructorInfo != null ? constructorInfo.Invoke(new object[] { this.configuration }) : Activator.CreateInstance(startupType);
 
                 var configureServiceMethod = startupType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                     .FirstOrDefault(info => info.Name == "ConfigureServices");
@@ -426,6 +431,21 @@ namespace StoneAssemblies.Extensibility.Services
             return null;
         }
 
+        /// <summary>
+        ///     Try load package assemblies.
+        /// </summary>
+        /// <param name="packageId">
+        ///     The package id.
+        /// </param>
+        /// <param name="packageVersion">
+        ///     The package version.
+        /// </param>
+        /// <param name="pluginsDirectoryPath">
+        ///     The plugin directory path.
+        /// </param>
+        /// <returns>
+        ///     <c>true</c> if the package is loaded, otherwise <c>false</c>.
+        /// </returns>
         private bool TryLoadPackageAssemblies(
             string packageId,
             NuGetVersion packageVersion,
