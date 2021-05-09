@@ -116,7 +116,7 @@ namespace StoneAssemblies.Extensibility.Services.Helpers
                 foreach (var targetFramework in TargetFrameworks)
                 {
                     var assemblyFilesFilteredByTargetFramework = assemblyFiles
-                        .Where(s => s.Contains($"{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}"))
+                        .Where(s => s.Contains($"{Path.DirectorySeparatorChar}lib{Path.DirectorySeparatorChar}{targetFramework}{Path.DirectorySeparatorChar}"))
                         .ToList();
 
                     if (TryLoadAnyAssemblyFrom(assemblyFilesFilteredByTargetFramework, out assembly))
@@ -149,7 +149,7 @@ namespace StoneAssemblies.Extensibility.Services.Helpers
                 try
                 {
                     Log.Information("Loading assembly file '{AssemblyName}'", assemblyFile);
-                    assembly = Assembly.Load(assemblyFile);
+                    assembly = Assembly.LoadFrom(assemblyFile);
                     Log.Information("Assembly file '{AssemblyName}' was loaded successfully.", assemblyFile);
                     return true;
                 }

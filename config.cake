@@ -9,5 +9,7 @@ string[] ComponentProjects  = new [] {
 	"./src/StoneAssemblies.Extensibility/StoneAssemblies.Extensibility.csproj"
 };
 
+string TestProject = "src/StoneAssemblies.Extensibility.Tests/StoneAssemblies.Extensibility.Tests.csproj";
+
 string SonarProjectKey = "stoneassemblies_StoneAssemblies.Extensibility";
 string SonarOrganization = "stoneassemblies";

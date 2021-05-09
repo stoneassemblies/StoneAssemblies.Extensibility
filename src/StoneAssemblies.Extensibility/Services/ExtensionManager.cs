@@ -95,7 +95,13 @@ namespace StoneAssemblies.Extensibility.Services
         /// <param name="serviceCollection">
         ///     The service collection.
         /// </param>
-        public ExtensionManager(IConfiguration configuration, IServiceCollection serviceCollection)
+        /// <param name="packageSources">
+        ///     The package sources.
+        /// </param>
+        public ExtensionManager(
+            IConfiguration configuration,
+            IServiceCollection serviceCollection,
+            List<string> packageSources = null)
         {
             this.configuration = configuration;
             this.serviceCollection = serviceCollection;
@@ -104,7 +110,13 @@ namespace StoneAssemblies.Extensibility.Services
             AppDomain.CurrentDomain.AssemblyResolve += this.OnCurrentAppDomainAssemblyResolve;
 
             var sources = new List<string>();
-            this.configuration.GetSection("Extensions").GetSection("Sources").Bind(sources);
+            this.configuration.GetSection("Extensions")?.GetSection("Sources")?.Bind(sources);
+
+            if (packageSources != null)
+            {
+                sources.AddRange(packageSources);
+            }
+
             foreach (var source in sources)
             {
                 var s = source;
@@ -217,6 +229,11 @@ namespace StoneAssemblies.Extensibility.Services
         /// </returns>
         private async Task<bool> TryLoadExtensionsPackageAsync(string packageId, NuGetVersion packageVersion)
         {
+            if (packageVersion == null)
+            {
+                return false;
+            }
+
             var pluginsDirectoryPath = Path.GetFullPath(PluginsDirectoryFolderName);
             var packageDependency = new PackageDependency(packageId, new VersionRange(packageVersion));
             await this.DownloadPackageAsync(packageDependency, pluginsDirectoryPath);
@@ -292,35 +309,13 @@ namespace StoneAssemblies.Extensibility.Services
                     var packageFileName = Path.Combine(CacheDirectoryFolderName, $"{packageId}.{packageVersion.OriginalVersion}.nupkg");
                     await resource.DownloadPackageAsync(package, packageVersion, packageFileName);
                     await this.DownloadDependenciesAsync(packageFileName);
-                    this.ExtractPackage(packageFileName, destination);
+                    PackageFile.ExtractToDirectory(packageFileName, destination);
+
                     break;
                 }
             }
         }
 
-        /// <summary>
-        ///     Extract package file.
-        /// </summary>
-        /// <param name="packageFileName">
-        ///     The package file name.
-        /// </param>
-        /// <param name="destination">
-        ///     The destination.
-        /// </param>
-        private void ExtractPackage(string packageFileName, string destination)
-        {
-            var packageDirectoryName = Path.GetFileNameWithoutExtension(packageFileName);
-            if (!Directory.Exists(destination))
-            {
-                Directory.CreateDirectory(destination);
-            }
-
-            var packagesDirectoryPath = Path.Combine(destination, packageDirectoryName);
-            if (!Directory.Exists(packagesDirectoryPath))
-            {
-                ZipFile.ExtractToDirectory(packageFileName, packagesDirectoryPath, true);
-            }
-        }
 
         /// <summary>
         ///     The initialize extension.
@@ -466,7 +461,7 @@ namespace StoneAssemblies.Extensibility.Services
                         {
                             foreach (var assemblyFile in assemblyFiles)
                             {
-                                var assembly = Assembly.Load(assemblyFile);
+                                var assembly = Assembly.LoadFrom(assemblyFile);
                                 this.extensions.Add(assembly);
                                 this.InitializeExtension(assembly);
                             }
