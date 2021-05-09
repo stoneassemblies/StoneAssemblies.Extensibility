@@ -36,6 +36,28 @@ var DockerRepositoryPrefix = string.IsNullOrWhiteSpace(dockerRepository) ? strin
 var sonarToken = EnvironmentVariable("SONAR_TOKEN");
 var sonarUrl = EnvironmentVariable("SONAR_URL") ?? "https://sonarcloud.io/";
 
+string GetCoverageFilePath() 
+{
+    if (string.IsNullOrWhiteSpace(TestProject))
+    {
+        return string.Empty;
+    }
+
+    var testDirectoryPath = System.IO.Path.GetDirectoryName(TestProject);
+    return System.IO.Path.GetFullPath($"{testDirectoryPath}/coverage.opencover.xml");
+}
+
+string GetTestResultFilePath() 
+{
+    if (string.IsNullOrWhiteSpace(TestProject))
+    {
+        return string.Empty;
+    }
+
+    var testDirectoryPath = System.IO.Path.GetDirectoryName(TestProject);
+    return System.IO.Path.GetFullPath($"{testDirectoryPath}/TestResults.trx");
+}
+
 Task("UpdateVersion")
   .Does(() => 
   {
@@ -121,7 +143,7 @@ Task("Test")
             .Append("/p:CoverletOutputFormat=opencover")
         };
 
-      settings.Loggers.Add($"trx;LogFileName={TestResultFilePath}");
+      settings.Loggers.Add($"trx;LogFileName={GetTestResultFilePath()}");
       settings.Collectors.Add("XPlat Code Coverage");
 
       DotNetCoreTest(TestProject, settings);	
@@ -140,8 +162,8 @@ Task("Sonar-Begin")
             .Append($"/k:{SonarProjectKey}")
             .Append($"/o:{SonarOrganization}")
             .Append($"/v:{NuGetVersionV2}")
-            .Append($"/d:sonar.cs.opencover.reportsPaths={CoverageFilePath}")
-            .Append($"/d:sonar.cs.vstest.reportsPaths={TestResultFilePath}")
+            .Append($"/d:sonar.cs.opencover.reportsPaths={GetCoverageFilePath()}")
+            .Append($"/d:sonar.cs.vstest.reportsPaths={GetTestResultFilePath()}")
             .Append($"/d:sonar.host.url={sonarUrl}")
             .Append($"/d:sonar.login={sonarToken}")
       });
