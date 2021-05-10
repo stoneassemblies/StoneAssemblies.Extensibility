@@ -23,13 +23,14 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// </summary>
 #pragma warning disable IDE0052 // Remove unread private members
         private readonly IConfiguration configuration;
-
 #pragma warning restore IDE0052 // Remove unread private members
 
         /// <summary>
-        /// The extension manager.
+        ///     The extension manager.
         /// </summary>
+#pragma warning disable IDE0052 // Remove unread private members
         private readonly IExtensionManager extensionManager;
+#pragma warning restore IDE0052 // Remove unread private members
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="Startup" /> class.
@@ -54,10 +55,7 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// </param>
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
-            this.extensionManager.Finished += (sender, args) =>
-                {
-                    serviceCollection.AddSingleton(new SqlConnection());
-                };
+            serviceCollection.AddSingleton(new SqlConnection());
         }
     }
 }

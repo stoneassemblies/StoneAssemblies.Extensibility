@@ -137,11 +137,6 @@ namespace StoneAssemblies.Extensibility.Services
         }
 
         /// <summary>
-        ///     Raised when all extensions loading process finished.
-        /// </summary>
-        public event EventHandler<EventArgs> Finished;
-
-        /// <summary>
         ///     Gets the extension assemblies.
         /// </summary>
         /// <returns>
@@ -215,7 +210,17 @@ namespace StoneAssemblies.Extensibility.Services
                 }
             }
 
-            this.OnFinished();
+            foreach (var extension in this.extensions)
+            {
+                try
+                {
+                    extension.InitializeExtension(this.serviceCollection, this.configuration, this);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error initializing extension {Name}", extension.GetName().Name);
+                }
+            }
         }
 
         /// <summary>
@@ -433,7 +438,6 @@ namespace StoneAssemblies.Extensibility.Services
                                 var assembly = Assembly.LoadFrom(assemblyFile);
 #pragma warning restore S3885 // "Assembly.Load" should be used
                                 this.extensions.Add(assembly);
-                                assembly.InitializeExtension(this.serviceCollection, this.configuration, this);
                             }
 
                             return true;
@@ -447,14 +451,6 @@ namespace StoneAssemblies.Extensibility.Services
             }
 
             return false;
-        }
-
-        /// <summary>
-        ///     Notifies loading extension process is finished.
-        /// </summary>
-        private void OnFinished()
-        {
-            this.Finished?.Invoke(this, EventArgs.Empty);
         }
     }
 }
