@@ -8,6 +8,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 {
     using System;
     using System.Collections.Generic;
+    using System.Linq;
     using System.Threading.Tasks;
 
     using Microsoft.Extensions.Configuration;
@@ -24,6 +25,37 @@ namespace StoneAssemblies.Extensibility.Tests.Services
     /// </summary>
     public class ExtensionManagerFacts
     {
+        /// <summary>
+        /// The get extension assembly method.
+        /// </summary>
+        [TestClass]
+        public class The_GetExtensionAssemblies_Method
+        {
+            [TestMethod]
+            public async Task Enum_The_Loaded_Extensions()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    new List<string>
+                        {
+                            "../../../../../output/nuget-local/",
+                            "https://api.nuget.org/v3/index.json",
+                        });
+
+                await extensionManager.LoadExtensionsAsync(
+                    new List<string>
+                        {
+                            "StoneAssemblies.Extensibility.DemoPlugin",
+                        });
+
+                Assert.AreEqual(1, extensionManager.GetExtensionAssemblies().Count());
+            }
+        }
+
         /// <summary>
         /// The the load extensions async tests.
         /// </summary>
