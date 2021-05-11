@@ -31,6 +31,12 @@ namespace StoneAssemblies.Extensibility.Tests.Services
         [TestClass]
         public class The_GetExtensionAssemblies_Method
         {
+            /// <summary>
+            ///     Enum The loaded extensions.
+            /// </summary>
+            /// <returns>
+            ///     The <see cref="Task" />.
+            /// </returns>
             [TestMethod]
             public async Task Enum_The_Loaded_Extensions()
             {
@@ -69,7 +75,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             ///     The <see cref="Task" />.
             /// </returns>
             [TestMethod]
-            public async Task Loads_Plugins_Properly_From_Non_Null_List_Of_Extensions_Async()
+            public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection()
             {
                 var configurationMock = new Mock<IConfiguration>();
                 var serviceCollection = new ServiceCollection();
@@ -99,7 +105,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             /// The <see cref="Task"/>.
             /// </returns>
             [TestMethod]
-            public async Task Succeeds_Even_If_Extension_List_Is_Null()
+            public async Task Empty_Load_Succeeds()
             {
                 var configurationMock = new Mock<IConfiguration>();
                 var serviceCollection = new ServiceCollection();
@@ -115,12 +121,35 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 try
                 {
-                    await extensionManager.LoadExtensionsAsync(null);
+                    await extensionManager.LoadExtensionsAsync();
                 }
                 catch (Exception)
                 {
                     Assert.Fail();
                 }
+            }
+
+            /// <summary>
+            /// Loads extensions from configuration.
+            /// </summary>
+            /// <returns>
+            /// The <see cref="Task"/>.
+            /// </returns>
+            [TestMethod]
+            public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration()
+            {
+                var dictionary = new Dictionary<string, string>
+                                          {
+                                              { "Extensions:Sources:0", "../../../../../output/nuget-local/" },
+                                              { "Extensions:Sources:1", "https://api.nuget.org/v3/index.json" },
+                                              { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
+                                          };
+
+                var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
+                var serviceCollection = new ServiceCollection();
+                IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration);
+
+                await extensionManager.LoadExtensionsAsync();
             }
         }
     }
