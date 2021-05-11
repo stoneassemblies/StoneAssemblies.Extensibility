@@ -142,7 +142,7 @@ namespace StoneAssemblies.Extensibility.Services
         /// <returns>
         ///     The <see cref="IEnumerable{Assembly}" />.
         /// </returns>
-        public IEnumerable<Assembly> GetExtensionAssemblies()
+        IEnumerable<Assembly> IExtensionManager.GetExtensionAssemblies()
         {
             foreach (var extension in this.extensions)
             {
@@ -159,18 +159,24 @@ namespace StoneAssemblies.Extensibility.Services
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        public async Task LoadExtensionsAsync(List<string> packageIds)
+        async Task IExtensionManager.LoadExtensionsAsync(List<string> packageIds)
         {
-            var packageIdsFromConfiguration = new List<string>();
-            this.configuration.GetSection("Extensions")?.GetSection("Packages")?.Bind(packageIdsFromConfiguration);
+            await this.LoadExtensionsAsync(packageIds);
+            this.InitializeExtensions();
+        }
 
-            var pendingPackageIds = new List<string>();
-            if (packageIds != null)
-            {
-                pendingPackageIds.AddRange(packageIds);
-            }
-
-            pendingPackageIds.AddRange(packageIdsFromConfiguration);
+        /// <summary>
+        ///     Loads the extensions from package ids.
+        /// </summary>
+        /// <param name="packageIds">
+        ///     The package ids.
+        /// </param>
+        /// <returns>
+        ///     The <see cref="Task" />.
+        /// </returns>
+        private async Task LoadExtensionsAsync(List<string> packageIds)
+        {
+            var pendingPackageIds = this.MergeWithPackageIdsFromConfiguration(packageIds);
             foreach (var sourceRepository in this.sourceRepositories)
             {
                 if (pendingPackageIds.Count == 0)
@@ -209,7 +215,40 @@ namespace StoneAssemblies.Extensibility.Services
                     }
                 }
             }
+        }
 
+        /// <summary>
+        ///     Merges package ids with package ids from configuration.
+        /// </summary>
+        /// <param name="packageIds">
+        ///     The package ids.
+        /// </param>
+        /// <returns>
+        ///     A merged list with package ids and  package ids from configuration.
+        /// </returns>
+        private List<string> MergeWithPackageIdsFromConfiguration(List<string> packageIds)
+        {
+            var mergedPackageIds = new List<string>();
+            if (packageIds != null)
+            {
+                mergedPackageIds.AddRange(packageIds);
+            }
+
+            var packageIdsFromConfiguration = new List<string>();
+            this.configuration.GetSection("Extensions")?.GetSection("Packages")?.Bind(packageIdsFromConfiguration);
+            if (packageIdsFromConfiguration.Count > 0)
+            {
+                mergedPackageIds.AddRange(packageIdsFromConfiguration);
+            }
+
+            return mergedPackageIds.Distinct().ToList();
+        }
+
+        /// <summary>
+        /// Initialize extensions.
+        /// </summary>
+        private void InitializeExtensions()
+        {
             foreach (var extension in this.extensions)
             {
                 try
