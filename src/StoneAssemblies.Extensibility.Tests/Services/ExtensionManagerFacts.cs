@@ -17,6 +17,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
     using Moq;
 
     using StoneAssemblies.Extensibility.Services;
+    using StoneAssemblies.Extensibility.Services.Interfaces;
 
     /// <summary>
     ///     The extension manager tests.
@@ -41,7 +42,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var configurationMock = new Mock<IConfiguration>();
                 var serviceCollection = new ServiceCollection();
 
-                var extensionManager = new ExtensionManager(
+                IExtensionManager extensionManager = new ExtensionManager(
                     serviceCollection,
                     configurationMock.Object,
                     new List<string>
@@ -71,7 +72,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var configurationMock = new Mock<IConfiguration>();
                 var serviceCollection = new ServiceCollection();
 
-                var extensionManager = new ExtensionManager(
+                IExtensionManager extensionManager = new ExtensionManager(
                     serviceCollection,
                     configurationMock.Object,
                     new List<string>
