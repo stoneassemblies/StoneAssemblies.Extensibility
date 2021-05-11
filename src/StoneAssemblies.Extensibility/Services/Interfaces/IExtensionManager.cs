@@ -32,6 +32,6 @@ namespace StoneAssemblies.Extensibility.Services.Interfaces
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        Task LoadExtensionsAsync(List<string> packageIds);
+        Task LoadExtensionsAsync(List<string> packageIds = null);
     }
 }
