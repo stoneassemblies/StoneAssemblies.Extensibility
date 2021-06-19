@@ -29,6 +29,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
         /// <summary>
         /// The get extension assembly method.
         /// </summary>
+        [CollectionDefinition("DemoPlugin", DisableParallelization = true)]
         public class The_GetExtensionAssemblies_Method
         {
             /// <summary>
@@ -65,6 +66,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
         /// <summary>
         /// The the load extensions async tests.
         /// </summary>
+        [CollectionDefinition("DemoPlugin", DisableParallelization = true)]
         public class The_LoadExtensionsAsync_Method
         {
             /// <summary>
