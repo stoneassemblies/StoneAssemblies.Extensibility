@@ -137,6 +137,7 @@ Task("Test")
     {
       var settings = new DotNetCoreTestSettings
         {
+          NoWorkingDirectory = true,
           Configuration = buildConfiguration,
           ArgumentCustomization = args => args
             .Append("/p:CollectCoverage=true")
@@ -306,7 +307,7 @@ Task("NuGetPush")
 {
 	var nugetFiles  = GetFiles("./output/nuget/*.nupkg");
 	foreach(var nugetFile in nugetFiles)
-    {
+        {
 		DotNetCoreNuGetPush(nugetFile.ToString(), new DotNetCoreNuGetPushSettings {
 		     Source = nugetRepository,
 		     ApiKey = nugetApiKey
