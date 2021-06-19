@@ -35,12 +35,12 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                 configurationMock.Object,
                 new List<string>
                     {
-                        "StoneAssemblies.Extensibility.DemoPlugin",
+                        "StoneAssemblies.Extensibility.DemoPlugin"
                     },
                 new List<string>
                     {
                         "../../../../../output/nuget-local/",
-                        "https://api.nuget.org/v3/index.json",
+                        "https://api.nuget.org/v3/index.json"
                     });
 
             Assert.NotNull(extensionManager);
@@ -59,15 +59,15 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                 configurationMock.Object,
                 new List<string>
                     {
-                        "StoneAssemblies.Extensibility.DemoPlugin",
+                        "StoneAssemblies.Extensibility.DemoPlugin"
                     },
                 new List<string>
                     {
                         "../../../../../output/nuget-local/",
-                        "https://api.nuget.org/v3/index.json",
+                        "https://api.nuget.org/v3/index.json"
                     });
 
-            Assert.NotEqual(0, serviceCollection.Count);
+            Assert.NotEmpty(serviceCollection);
         }
     }
 }
