@@ -10,22 +10,22 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
 
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     using Moq;
 
     using StoneAssemblies.Extensibility.Extensions;
 
+    using Xunit;
+
     /// <summary>
     ///     The extension manager tests.
     /// </summary>
-    [TestClass]
     public class ServiceCollectionExtensionsTests
     {
         /// <summary>
         ///     The creates the extension manager.
         /// </summary>
-        [TestMethod]
+        [Fact]
         public void CreatesTheExtensionManager()
         {
             var configurationMock = new Mock<IConfiguration>();
@@ -43,13 +43,13 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                         "https://api.nuget.org/v3/index.json",
                     });
 
-            Assert.IsNotNull(extensionManager);
+            Assert.NotNull(extensionManager);
         }
 
         /// <summary>
         ///     The load extensions async.
         /// </summary>
-        [TestMethod]
+        [Fact]
         public void LoadPluginsProperly()
         {
             var configurationMock = new Mock<IConfiguration>();
@@ -67,7 +67,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                         "https://api.nuget.org/v3/index.json",
                     });
 
-            Assert.AreNotEqual(0, serviceCollection.Count);
+            Assert.NotEqual(0, serviceCollection.Count);
         }
     }
 }

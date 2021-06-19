@@ -13,12 +13,13 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     using Moq;
 
     using StoneAssemblies.Extensibility.Services;
     using StoneAssemblies.Extensibility.Services.Interfaces;
+
+    using Xunit;
 
     /// <summary>
     ///     The extension manager tests.
@@ -28,7 +29,6 @@ namespace StoneAssemblies.Extensibility.Tests.Services
         /// <summary>
         /// The get extension assembly method.
         /// </summary>
-        [TestClass]
         public class The_GetExtensionAssemblies_Method
         {
             /// <summary>
@@ -37,7 +37,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             /// <returns>
             ///     The <see cref="Task" />.
             /// </returns>
-            [TestMethod]
+            [Fact]
             public async Task Enum_The_Loaded_Extensions()
             {
                 var configurationMock = new Mock<IConfiguration>();
@@ -58,14 +58,13 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                             "StoneAssemblies.Extensibility.DemoPlugin",
                         });
 
-                Assert.AreEqual(1, extensionManager.GetExtensionAssemblies().Count());
+                Assert.Single(extensionManager.GetExtensionAssemblies());
             }
         }
 
         /// <summary>
         /// The the load extensions async tests.
         /// </summary>
-        [TestClass]
         public class The_LoadExtensionsAsync_Method
         {
             /// <summary>
@@ -74,7 +73,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             /// <returns>
             ///     The <see cref="Task" />.
             /// </returns>
-            [TestMethod]
+            [Fact]
             public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection()
             {
                 var configurationMock = new Mock<IConfiguration>();
@@ -95,7 +94,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                             "StoneAssemblies.Extensibility.DemoPlugin",
                         });
 
-                Assert.AreNotEqual(0, serviceCollection.Count);
+                Assert.NotEmpty(serviceCollection);
             }
 
             /// <summary>
@@ -104,8 +103,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             /// <returns>
             /// The <see cref="Task"/>.
             /// </returns>
-            [TestMethod]
-            public async Task Empty_Load_Succeeds()
+            [Fact]
+            public async Task Empty_Load_Succeeds_Without_Exception()
             {
                 var configurationMock = new Mock<IConfiguration>();
                 var serviceCollection = new ServiceCollection();
@@ -119,14 +118,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                             "https://api.nuget.org/v3/index.json",
                         });
 
-                try
-                {
-                    await extensionManager.LoadExtensionsAsync();
-                }
-                catch (Exception)
-                {
-                    Assert.Fail();
-                }
+                await extensionManager.LoadExtensionsAsync();
             }
 
             /// <summary>
@@ -135,7 +127,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             /// <returns>
             /// The <see cref="Task"/>.
             /// </returns>
-            [TestMethod]
+            [Fact]
             public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration()
             {
                 var dictionary = new Dictionary<string, string>
