@@ -20,6 +20,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
     /// <summary>
     ///     The extension manager tests.
     /// </summary>
+    [CollectionDefinition("DemoPlugin", DisableParallelization = true)]
     public class ServiceCollectionExtensionsTests
     {
         /// <summary>
