@@ -5,6 +5,9 @@ NuGet based extensibility system for netcore apps.
 
 Build Status
 ------------
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=stoneassemblies_StoneAssemblies.Extensibility&metric=alert_status)](https://sonarcloud.io/dashboard?id=stoneassemblies_StoneAssemblies.Extensibility)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=stoneassemblies_StoneAssemblies.Extensibility&metric=ncloc)](https://sonarcloud.io/dashboard?id=stoneassemblies_StoneAssemblies.Extensibility)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=stoneassemblies_StoneAssemblies.Extensibility&metric=coverage)](https://sonarcloud.io/dashboard?id=stoneassemblies_StoneAssemblies.Extensibility)
 
 Branch | Status
 ------ | :------:
