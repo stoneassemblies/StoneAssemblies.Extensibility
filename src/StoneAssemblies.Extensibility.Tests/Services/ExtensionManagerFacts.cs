@@ -166,7 +166,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
         ///     The <see cref="Task" />.
         /// </returns>
         [Fact]
-        public async Task Succeeds_Without_Exception_With_Configuration()
+        public async Task Succeeds_Without_Exception_With_Empty_Configuration()
         {
             var configurationMock = new Mock<IConfiguration>();
             var serviceCollection = new ServiceCollection();
@@ -181,6 +181,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                     });
 
             await extensionManager.LoadExtensionsAsync();
+
             Assert.Empty(serviceCollection);
         }
     }
