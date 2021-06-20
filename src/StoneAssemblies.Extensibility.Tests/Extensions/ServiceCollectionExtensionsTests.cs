@@ -4,6 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
+
 namespace StoneAssemblies.Extensibility.Tests.Extensions
 {
     using System.Collections.Generic;
@@ -20,7 +21,6 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
     /// <summary>
     ///     The extension manager tests.
     /// </summary>
-    [CollectionDefinition("DemoPlugin", DisableParallelization = true)]
     public class ServiceCollectionExtensionsTests
     {
         /// <summary>
