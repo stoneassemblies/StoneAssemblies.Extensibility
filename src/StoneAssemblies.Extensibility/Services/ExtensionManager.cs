@@ -7,6 +7,7 @@
 namespace StoneAssemblies.Extensibility.Services
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
@@ -74,6 +75,11 @@ namespace StoneAssemblies.Extensibility.Services
         ///     The extensions.
         /// </summary>
         private readonly List<Assembly> extensions = new List<Assembly>();
+
+        /// <summary>
+        /// The startup objects
+        /// </summary>
+        private readonly ArrayList startupObjects = new ArrayList();
 
         /// <summary>
         ///     The service collection.
@@ -165,6 +171,51 @@ namespace StoneAssemblies.Extensibility.Services
             this.InitializeExtensions();
         }
 
+        public void Configure(params object[] @params)
+        {
+            var types = @params.Select(o => o.GetType()).ToArray();
+            foreach (var startupObject in this.startupObjects)
+            {
+                MethodInfo configureMethod = null;
+                var methodInfos = startupObject.GetType().GetMethods().Where(info =>info.Name == "Configure").ToList();
+                foreach (var methodInfo in methodInfos)
+                {
+                    configureMethod = methodInfo;
+                    var parameterInfos = methodInfo.GetParameters();
+                    if (parameterInfos.Length == types.Length)
+                    {
+                        for (var index = 0; index < parameterInfos.Length; index++)
+                        {
+                            var parameterType = parameterInfos[index].ParameterType;
+                            var type = types[index];
+                            if (!parameterType.IsAssignableFrom(type))
+                            {
+                                configureMethod = null;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (configureMethod != null)
+                    {
+                        break;
+                    }
+                }
+
+                if (configureMethod != null)
+                {
+                    try
+                    {
+                        configureMethod.Invoke(startupObject, @params);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "Error configuring extension");
+                    }
+                }
+            }
+        }
+
         /// <summary>
         ///     Loads the extensions from package ids.
         /// </summary>
@@ -253,7 +304,8 @@ namespace StoneAssemblies.Extensibility.Services
             {
                 try
                 {
-                    extension.InitializeExtension(this.serviceCollection, this.configuration, this);
+                    var startup = extension.InitializeExtension(this.serviceCollection, this.configuration, this);
+                    this.startupObjects.Add(startup);
                 }
                 catch (Exception ex)
                 {

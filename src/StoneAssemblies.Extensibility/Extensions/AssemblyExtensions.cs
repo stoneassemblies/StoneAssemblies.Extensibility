@@ -38,7 +38,7 @@ namespace StoneAssemblies.Extensibility.Extensions
         /// <param name="extensionManager">
         ///     The extension manager.
         /// </param>
-        public static void InitializeExtension(
+        public static object InitializeExtension(
             this Assembly assembly,
             IServiceCollection serviceCollection,
             IConfiguration configuration,
@@ -49,6 +49,8 @@ namespace StoneAssemblies.Extensibility.Extensions
             {
                 ConfigureServices(startup, serviceCollection);
             }
+
+            return startup;
         }
 
         /// <summary>

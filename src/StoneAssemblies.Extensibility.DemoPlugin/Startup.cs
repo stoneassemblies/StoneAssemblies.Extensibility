@@ -6,6 +6,9 @@
 
 namespace StoneAssemblies.Extensibility.DemoPlugin
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
     using System.Data.SqlClient;
 
     using Microsoft.Extensions.Configuration;
@@ -56,6 +59,18 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
             serviceCollection.AddSingleton(new SqlConnection());
+        }
+
+        /// <summary>
+        /// The configure.
+        /// </summary>
+        /// <param name="action">
+        /// The action.
+        /// </param>
+        public void Configure(Action<string> action, IList objects)
+        {
+            action(string.Empty);
+            objects.Add("Hello");
         }
     }
 }

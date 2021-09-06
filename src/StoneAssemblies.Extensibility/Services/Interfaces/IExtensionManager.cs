@@ -33,5 +33,13 @@ namespace StoneAssemblies.Extensibility.Services.Interfaces
         ///     The <see cref="Task" />.
         /// </returns>
         Task LoadExtensionsAsync(List<string> packageIds = null);
+
+        /// <summary>
+        /// Call configure method of all start up object that match with the expected signature.
+        /// </summary>
+        /// <param name="params">
+        /// The params.
+        /// </param>
+        void Configure(params object[] @params);
     }
 }
