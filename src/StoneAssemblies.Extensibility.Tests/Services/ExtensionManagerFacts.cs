@@ -218,6 +218,37 @@ namespace StoneAssemblies.Extensibility.Tests.Services
         }
 
         [Fact]
+        public async Task The_Configure_Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments()
+        {
+            var dictionary = new Dictionary<string, string>
+                                 {
+                                     {
+                                         "Extensions:Sources:0", "../../../../../output/nuget-local/"
+                                     },
+                                     {
+                                         "Extensions:Sources:1", "https://api.nuget.org/v3/index.json"
+                                     },
+                                     {
+                                         "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin"
+                                     }
+                                 };
+
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
+            var serviceCollection = new ServiceCollection();
+            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration);
+
+            await extensionManager.LoadExtensionsAsync();
+
+            var called = false;
+            var list = new List<string>();
+
+            extensionManager.Configure(null, new Action<string>(s => { called = true; }), null, list, null);
+
+            Assert.True(called);
+            Assert.NotEmpty(list);
+        }
+
+        [Fact]
         public async Task The_Configure_Method_Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature()
         {
             var dictionary = new Dictionary<string, string>

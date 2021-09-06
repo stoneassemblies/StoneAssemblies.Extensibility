@@ -171,42 +171,39 @@ namespace StoneAssemblies.Extensibility.Services
             this.InitializeExtensions();
         }
 
-        public void Configure(params object[] @params)
+        /// <inheritdoc />
+        public void Configure(params object[] parameters)
         {
-            var types = @params.Select(o => o.GetType()).ToArray();
+            parameters = parameters.Where(p => p != null).ToArray();
+            var types = parameters.Select(o => o.GetType()).ToArray();
+
             foreach (var startupObject in this.startupObjects)
             {
-                MethodInfo configureMethod = null;
-                var methodInfos = startupObject.GetType().GetMethods().Where(info =>info.Name == "Configure").ToList();
-                foreach (var methodInfo in methodInfos)
-                {
-                    configureMethod = methodInfo;
-                    var parameterInfos = methodInfo.GetParameters();
-                    if (parameterInfos.Length == types.Length)
-                    {
-                        for (var index = 0; index < parameterInfos.Length; index++)
-                        {
-                            var parameterType = parameterInfos[index].ParameterType;
-                            var type = types[index];
-                            if (!parameterType.IsAssignableFrom(type))
-                            {
-                                configureMethod = null;
-                                break;
-                            }
-                        }
-                    }
+                var methods = startupObject.GetType().GetMethods()
+                    .Where(info => info.Name == "Configure" && info.GetParameters().Length == parameters.Length)
+                    .ToList();
 
-                    if (configureMethod != null)
+                MethodInfo method = null;
+                for (var i = 0; i < methods.Count && method == null; i++)
+                {
+                    method = methods[i];
+                    var methodParameters = method.GetParameters();
+                    for (var j = 0; j < methodParameters.Length && method != null; j++)
                     {
-                        break;
+                        var parameterType = methodParameters[j].ParameterType;
+                        var type = types[j];
+                        if (!parameterType.IsAssignableFrom(type))
+                        {
+                            method = null;
+                        }
                     }
                 }
 
-                if (configureMethod != null)
+                if (method != null)
                 {
                     try
                     {
-                        configureMethod.Invoke(startupObject, @params);
+                        method.Invoke(startupObject, parameters);
                     }
                     catch (Exception ex)
                     {
