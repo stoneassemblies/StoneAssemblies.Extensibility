@@ -354,13 +354,19 @@ namespace StoneAssemblies.Extensibility.Services
                 {
                     foreach (var packageDependency in dependencyGroup.Packages)
                     {
-                        try
+                        var packageName = packageDependency.Id;
+                        var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(
+                            a => packageName.Equals(a.GetName()?.Name, StringComparison.InvariantCultureIgnoreCase));
+                        if (assembly == null)
                         {
-                            await this.DownloadPackageAsync(packageDependency, DependenciesDirectoryFolderName);
-                        }
-                        catch (Exception e)
-                        {
-                            Log.Error(e, "Error downloading package {PackageId}", packageDependency.Id);
+                            try
+                            {
+                                await this.DownloadPackageAsync(packageDependency, DependenciesDirectoryFolderName);
+                            }
+                            catch (Exception e)
+                            {
+                                Log.Error(e, "Error downloading package {PackageId}", packageName);
+                            }
                         }
                     }
 
