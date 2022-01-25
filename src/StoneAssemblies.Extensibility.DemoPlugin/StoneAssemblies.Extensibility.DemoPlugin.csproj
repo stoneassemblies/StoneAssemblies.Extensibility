@@ -4,12 +4,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+	  <PackageReference Include="Microsoft.Data.SqlClient" Version="4.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
+  <!--<ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-  </ItemGroup>
+  </ItemGroup>-->
 
   <ItemGroup>
     <ProjectReference Include="..\StoneAssemblies.Extensibility\StoneAssemblies.Extensibility.csproj" />

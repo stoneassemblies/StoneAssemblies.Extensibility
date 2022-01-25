@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net5.0;netcoreapp3.1</TargetFrameworks>
+		<TargetFrameworks>net5.0</TargetFrameworks>
 		<Description>NuGet based extensibility system for netcore apps.</Description>
 		<PackageTags>nuget;netcore;extensibility</PackageTags>
 		<IsPackable>true</IsPackable>
@@ -9,9 +9,12 @@
 	<ItemGroup>
 		<PackageReference Include="Serilog" Version="2.10.0" />
 		<PackageReference Include="NuGet.Protocol" Version="5.11.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
 	</ItemGroup>
 
-	<ItemGroup>
+	<!--<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
-	</ItemGroup>
+	</ItemGroup>-->
 </Project>
