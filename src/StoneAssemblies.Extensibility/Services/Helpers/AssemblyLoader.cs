@@ -152,7 +152,8 @@ namespace StoneAssemblies.Extensibility.Services.Helpers
 #pragma warning disable S3885 // "Assembly.Load" should be used
                     assembly = Assembly.LoadFrom(assemblyFile);
 #pragma warning restore S3885 // "Assembly.Load" should be used
-                    Log.Information("Assembly file '{AssemblyName}' was loaded successfully.", assemblyFile);
+                    Log.Information("Loaded assembly file '{AssemblyName}' successfully.", assemblyFile);
+
                     return true;
                 }
                 catch (Exception ex)

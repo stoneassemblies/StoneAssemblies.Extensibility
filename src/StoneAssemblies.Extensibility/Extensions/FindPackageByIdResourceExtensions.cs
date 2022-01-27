@@ -6,9 +6,12 @@
 
 namespace StoneAssemblies.Extensibility.Extensions
 {
+    using System;
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
+
+    using ICSharpCode.SharpZipLib.Zip;
 
     using NuGet.Common;
     using NuGet.Packaging.Core;
@@ -40,13 +43,34 @@ namespace StoneAssemblies.Extensibility.Extensions
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        public static async Task DownloadPackageAsync(
+        public static async Task<bool> DownloadPackageAsync(
             this FindPackageByIdResource resource,
             string packageId,
             NuGetVersion packageVersion,
             string packageFileName)
         {
-            if (!File.Exists(packageFileName))
+            if (File.Exists(packageFileName))
+            {
+                try
+                {
+                    var zipFile = new ZipFile(packageFileName);
+                    if (zipFile.TestArchive(true, TestStrategy.FindFirstError, null))
+                    {
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // ignored
+                }
+
+                Log.Warning(
+                    "The existing dependency package {PackageId} {PackageVersion} is corrupted and will be download again.",
+                    packageId,
+                    packageVersion.OriginalVersion);
+            }
+
+            try
             {
                 await using (var packageStream = new FileStream(packageFileName, FileMode.Create, FileAccess.Write))
                 {
@@ -59,11 +83,39 @@ namespace StoneAssemblies.Extensibility.Extensions
                         packageId,
                         packageVersion,
                         packageStream,
-                        new NullSourceCacheContext(),
+                        NullSourceCacheContext.Instance,
                         NullLogger.Instance,
                         CancellationToken.None);
                 }
+
+                var zipFile = new ZipFile(packageFileName);
+                if (zipFile.TestArchive(true, TestStrategy.FindFirstError, null))
+                {
+                    Log.Information(
+                        "Downloaded dependency package {PackageId} {PackageVersion}",
+                        packageId,
+                        packageVersion.OriginalVersion);
+
+                    return true;
+                }
+                else
+                {
+                    Log.Error(
+                        "Error validating downloaded dependency package {PackageId} {PackageVersion}",
+                        packageId,
+                        packageVersion.OriginalVersion);
+                }
             }
+            catch (Exception ex)
+            {
+                Log.Error(
+                    ex,
+                    "Error downloading dependency package {PackageId} {PackageVersion}",
+                    packageId,
+                    packageVersion.OriginalVersion);
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -84,13 +136,13 @@ namespace StoneAssemblies.Extensibility.Extensions
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        public static async Task DownloadPackageAsync(
+        public static async Task<bool> DownloadPackageAsync(
             this FindPackageByIdResource resource,
             PackageDependency package,
             NuGetVersion packageVersion,
             string packageFileName)
         {
-            await resource.DownloadPackageAsync(package.Id, packageVersion, packageFileName);
+            return await resource.DownloadPackageAsync(package.Id, packageVersion, packageFileName);
         }
     }
 }

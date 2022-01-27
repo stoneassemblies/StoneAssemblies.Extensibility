@@ -17,6 +17,8 @@ namespace StoneAssemblies.Extensibility.Services
     using System.Threading;
     using System.Threading.Tasks;
 
+    using ICSharpCode.SharpZipLib.Zip;
+
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
@@ -132,7 +134,7 @@ namespace StoneAssemblies.Extensibility.Services
 
                 try
                 {
-                    var sourceRepository = Repository.Factory.GetCoreV3(s);
+                    var sourceRepository = Repository.Factory.GetCoreV3(s, FeedType.Undefined);
                     this.sourceRepositories.Add(sourceRepository);
                 }
                 catch (Exception e)
@@ -250,7 +252,7 @@ namespace StoneAssemblies.Extensibility.Services
                     {
                         var versions = await resource.GetAllVersionsAsync(
                                            packageId,
-                                           new NullSourceCacheContext(),
+                                           NullSourceCacheContext.Instance,
                                            NullLogger.Instance,
                                            CancellationToken.None);
 
@@ -331,6 +333,15 @@ namespace StoneAssemblies.Extensibility.Services
             }
 
             var pluginsDirectoryPath = Path.GetFullPath(PluginsDirectoryFolderName);
+            if (!Directory.Exists(pluginsDirectoryPath))
+            {
+                Log.Information("Creating {Directory} directory", CacheDirectoryFolderName);
+
+                Directory.CreateDirectory(pluginsDirectoryPath);
+
+                Log.Information("Created {Directory} directory", CacheDirectoryFolderName);
+            }
+
             var packageDependency = new PackageDependency(packageId, new VersionRange(packageVersion));
             await this.DownloadPackageAsync(packageDependency, pluginsDirectoryPath);
             return this.TryLoadPackageAssemblies(packageId, packageVersion, pluginsDirectoryPath);
@@ -355,6 +366,7 @@ namespace StoneAssemblies.Extensibility.Services
                     foreach (var packageDependency in dependencyGroup.Packages)
                     {
                         var packageName = packageDependency.Id;
+
                         var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(
                             a => packageName.Equals(a.GetName()?.Name, StringComparison.InvariantCultureIgnoreCase));
                         if (assembly == null)
@@ -367,6 +379,10 @@ namespace StoneAssemblies.Extensibility.Services
                             {
                                 Log.Error(e, "Error downloading package {PackageId}", packageName);
                             }
+                        }
+                        else
+                        {
+                            Log.Warning("Skipping download package {PackageName} because its name matches with an already loaded assembly.", packageName);
                         }
                     }
 
@@ -389,32 +405,80 @@ namespace StoneAssemblies.Extensibility.Services
         /// </returns>
         private async Task DownloadPackageAsync(PackageDependency package, string destination)
         {
-            foreach (var sourceRepository in this.sourceRepositories)
+            var succeeded = false;
+            do
             {
-                var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
-
-                if (!Directory.Exists(CacheDirectoryFolderName))
+                foreach (var sourceRepository in this.sourceRepositories)
                 {
-                    Directory.CreateDirectory(CacheDirectoryFolderName);
-                }
+                    Log.Information(
+                        "Searching {PackageId} {PackageVersion} in source {PackageSource}",
+                        package.Id,
+                        package.VersionRange.OriginalString,
+                        sourceRepository.PackageSource.SourceUri);
 
-                var packageId = package.Id;
-                var packageDependencyVersions = await resource.GetAllVersionsAsync(
-                                                    packageId,
-                                                    new NullSourceCacheContext(),
-                                                    NullLogger.Instance,
-                                                    CancellationToken.None);
+                    var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
 
-                var packageVersion = package.VersionRange.FindBestMatch(packageDependencyVersions);
-                if (packageVersion != null)
-                {
-                    var packageFileName = Path.Combine(CacheDirectoryFolderName, $"{packageId}.{packageVersion.OriginalVersion}.nupkg");
-                    await resource.DownloadPackageAsync(package, packageVersion, packageFileName);
-                    await this.DownloadDependenciesAsync(packageFileName);
-                    PackageFile.ExtractToDirectory(packageFileName, destination);
-                    break;
+                    var cacheDirectoryFolderName = Path.GetFullPath(PluginsDirectoryFolderName);
+                    if (!Directory.Exists(cacheDirectoryFolderName))
+                    {
+                        Log.Information("Creating {Directory} directory", CacheDirectoryFolderName);
+
+                        Directory.CreateDirectory(cacheDirectoryFolderName);
+
+                        Log.Information("Created {Directory} directory", CacheDirectoryFolderName);
+                    }
+
+                    var packageId = package.Id;
+                    var packageDependencyVersions = await resource.GetAllVersionsAsync(
+                                                        packageId,
+                                                        NullSourceCacheContext.Instance,
+                                                        NullLogger.Instance,
+                                                        CancellationToken.None);
+
+                    var packageVersion = package.VersionRange.FindBestMatch(packageDependencyVersions);
+                    if (packageVersion != null)
+                    {
+                        Log.Information(
+                            "Found {PackageId} {PackageVersion} in source {PackageSource}",
+                            package.Id,
+                            package.VersionRange.OriginalString,
+                            sourceRepository.PackageSource.SourceUri);
+
+                        var packageFileName = Path.Combine(
+                            CacheDirectoryFolderName,
+                            $"{packageId}.{packageVersion.OriginalVersion}.nupkg");
+
+                        if (await resource.DownloadPackageAsync(package, packageVersion, packageFileName))
+                        {
+                            await this.DownloadDependenciesAsync(packageFileName);
+
+                            Log.Information(
+                                "Extracting {PackageId} {PackageVersion} to {Destination}",
+                                package.Id,
+                                package.VersionRange.OriginalString,
+                                destination);
+
+                            PackageFile.ExtractToDirectory(packageFileName, destination);
+
+                            Log.Information(
+                                "Extracted {PackageId} {PackageVersion} to {Destination}",
+                                package.Id,
+                                package.VersionRange.OriginalString,
+                                destination);
+
+                            succeeded = true;
+                            break;
+                        }
+                    }
+
+                    Log.Warning(
+                        "Not found package {PackageId} {PackageVersion} in source {PackageSource} ",
+                        packageId,
+                        package.VersionRange.OriginalString,
+                        sourceRepository.PackageSource.SourceUri);
                 }
             }
+            while (!succeeded);
         }
 
         /// <summary>
@@ -450,7 +514,7 @@ namespace StoneAssemblies.Extensibility.Services
                     unmanagedDll = NativeLibrary.Load(libraryPath);
 
                     Log.Information(
-                        "Native dependency '{LibraryFileName}' was loaded successfully from '{LibraryPath} ",
+                        "Loaded native dependency '{LibraryFileName}' successfully from '{LibraryPath} ",
                         libraryFileName,
                         libraryPath);
 
