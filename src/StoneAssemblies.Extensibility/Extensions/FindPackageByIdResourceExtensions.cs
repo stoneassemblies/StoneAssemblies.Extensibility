@@ -98,13 +98,11 @@ namespace StoneAssemblies.Extensibility.Extensions
 
                     return true;
                 }
-                else
-                {
-                    Log.Error(
-                        "Error validating downloaded dependency package {PackageId} {PackageVersion}",
-                        packageId,
-                        packageVersion.OriginalVersion);
-                }
+
+                Log.Error(
+                    "Error validating downloaded dependency package {PackageId} {PackageVersion}",
+                    packageId,
+                    packageVersion.OriginalVersion);
             }
             catch (Exception ex)
             {
