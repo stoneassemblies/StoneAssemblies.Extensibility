@@ -332,18 +332,18 @@ namespace StoneAssemblies.Extensibility.Services
                 return false;
             }
 
-            var pluginsDirectoryPath = Path.GetFullPath(CacheDirectoryFolderName);
+            var pluginsDirectoryPath = Path.GetFullPath(PluginsDirectoryFolderName);
             if (!Directory.Exists(pluginsDirectoryPath))
             {
-                Log.Information("Creating {Directory} directory", CacheDirectoryFolderName);
+                Log.Information("Creating {Directory} directory", PluginsDirectoryFolderName);
 
                 Directory.CreateDirectory(pluginsDirectoryPath);
 
-                Log.Information("Created {Directory} directory", CacheDirectoryFolderName);
+                Log.Information("Created {Directory} directory", PluginsDirectoryFolderName);
             }
 
             var packageDependency = new PackageDependency(packageId, new VersionRange(packageVersion));
-            await this.DownloadPackageAsync(packageDependency, pluginsDirectoryPath);
+            await this.EnsureDownloadPackageAsync(packageDependency, pluginsDirectoryPath);
             return this.TryLoadPackageAssemblies(packageId, packageVersion, pluginsDirectoryPath);
         }
 
@@ -366,19 +366,11 @@ namespace StoneAssemblies.Extensibility.Services
                     foreach (var packageDependency in dependencyGroup.Packages)
                     {
                         var packageName = packageDependency.Id;
-
                         var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(
                             a => packageName.Equals(a.GetName()?.Name, StringComparison.InvariantCultureIgnoreCase));
                         if (assembly == null)
                         {
-                            try
-                            {
-                                await this.DownloadPackageAsync(packageDependency, DependenciesDirectoryFolderName);
-                            }
-                            catch (Exception e)
-                            {
-                                Log.Error(e, "Error downloading package {PackageId}", packageName);
-                            }
+                            await this.EnsureDownloadPackageAsync(packageDependency, DependenciesDirectoryFolderName);
                         }
                         else
                         {
@@ -389,6 +381,38 @@ namespace StoneAssemblies.Extensibility.Services
                     break;
                 }
             }
+        }
+
+        /// <summary>
+        ///     Ensures download package.
+        /// </summary>
+        /// <param name="packageDependency">
+        ///     The package dependency
+        /// </param>
+        /// <param name="destination">
+        ///     The destination.
+        /// </param>
+        /// <returns>The task.</returns>
+        private async Task EnsureDownloadPackageAsync(PackageDependency packageDependency, string destination)
+        {
+            var succeeded = false;
+            do
+            {
+                try
+                {
+                    Log.Information("Downloading package {PackageId}", packageDependency.Id);
+
+                    await this.DownloadPackageAsync(packageDependency, destination);
+                    succeeded = true;
+
+                    Log.Information("Downloaded package {PackageId}", packageDependency.Id);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error downloading package {PackageId}.", packageDependency.Id);
+                }
+            }
+            while (!succeeded);
         }
 
         /// <summary>
