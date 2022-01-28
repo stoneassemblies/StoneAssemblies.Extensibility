@@ -17,8 +17,6 @@ namespace StoneAssemblies.Extensibility.Services
     using System.Threading;
     using System.Threading.Tasks;
 
-    using ICSharpCode.SharpZipLib.Zip;
-
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
@@ -571,14 +569,42 @@ namespace StoneAssemblies.Extensibility.Services
         /// </returns>
         private Assembly OnCurrentAppDomainAssemblyResolve(object sender, ResolveEventArgs args)
         {
+            Assembly assembly = null;
             if (!string.IsNullOrWhiteSpace(args?.Name))
             {
                 var fileName = args.Name.Split(',')[0];
-                var directoryPath = Path.GetFullPath(DependenciesDirectoryFolderName);
-                return AssemblyLoader.LoadAssemblyFrom(directoryPath, fileName);
+                var assemblyLocalCopyFilePath = Path.Combine(Directory.GetCurrentDirectory(), fileName + ".dll");
+                if (File.Exists(assemblyLocalCopyFilePath))
+                {
+                    try
+                    {
+                        Log.Information("Loading assembly from local copy {FileName}", assemblyLocalCopyFilePath);
+
+                        assembly = Assembly.LoadFrom(assemblyLocalCopyFilePath);
+
+                        Log.Information("Loaded assembly from local copy {FileName}", assemblyLocalCopyFilePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(ex, "Error loading assembly local copy {FileName}", assemblyLocalCopyFilePath);
+                    }
+                }
+
+                if (assembly == null)
+                {
+                    Log.Information("Loading assembly from {FileName} from lib directory", fileName);
+
+                    var directoryPath = Path.GetFullPath(DependenciesDirectoryFolderName);
+                    assembly = AssemblyLoader.LoadAssemblyFrom(directoryPath, fileName);
+
+                    if (assembly != null)
+                    {
+                        Log.Information("Loaded assembly from {FileName} from lib directory", fileName);
+                    }
+                }
             }
 
-            return null;
+            return assembly;
         }
 
         /// <summary>
