@@ -126,15 +126,15 @@ namespace StoneAssemblies.Extensibility.Services
 
             foreach (var source in sources)
             {
-                var s = source;
-                if (!Uri.TryCreate(s, UriKind.Absolute, out _) && Directory.Exists(s))
-                {
-                    s = Path.GetFullPath(s);
-                }
-
                 try
                 {
-                    var sourceRepository = Repository.Factory.GetCoreV3(s, FeedType.Undefined);
+                    var s = source;
+                    if (!Uri.TryCreate(s, UriKind.Absolute, out _) && Directory.Exists(s))
+                    {
+                        s = Path.GetFullPath(s);
+                    }
+
+                    var sourceRepository = Repository.Factory.GetCoreV3(s);
                     this.sourceRepositories.Add(sourceRepository);
                 }
                 catch (Exception e)
@@ -332,7 +332,7 @@ namespace StoneAssemblies.Extensibility.Services
                 return false;
             }
 
-            var pluginsDirectoryPath = Path.GetFullPath(PluginsDirectoryFolderName);
+            var pluginsDirectoryPath = Path.GetFullPath(CacheDirectoryFolderName);
             if (!Directory.Exists(pluginsDirectoryPath))
             {
                 Log.Information("Creating {Directory} directory", CacheDirectoryFolderName);
@@ -418,7 +418,7 @@ namespace StoneAssemblies.Extensibility.Services
 
                     var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
 
-                    var cacheDirectoryFolderName = Path.GetFullPath(PluginsDirectoryFolderName);
+                    var cacheDirectoryFolderName = Path.GetFullPath(CacheDirectoryFolderName);
                     if (!Directory.Exists(cacheDirectoryFolderName))
                     {
                         Log.Information("Creating {Directory} directory", CacheDirectoryFolderName);
