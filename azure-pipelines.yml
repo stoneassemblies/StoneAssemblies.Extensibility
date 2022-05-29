@@ -11,10 +11,10 @@ pool:
 
 steps:
 - task: UseDotNet@2
-  displayName: Use .NET 5.0
+  displayName: Use .NET 6.0
   inputs:
     packageType: 'sdk'
-    version: '5.0.x'
+    version: '6.0.x'
 
 - script: dotnet tool restore
   displayName: 'Restore Tools'
@@ -26,12 +26,6 @@ steps:
   displayName: 'Sonar'
   env:
     SONAR_TOKEN: $(SONAR_TOKEN)
-
-- task: UseDotNet@2
-  displayName: Use .NET 6.0
-  inputs:
-    packageType: 'sdk'
-    version: '6.0.x'
 
 - script: dotnet cake --target=NuGetPack
   displayName: 'NuGet Pack'

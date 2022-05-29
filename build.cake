@@ -89,7 +89,7 @@ Task("Restore")
   .Does(() => 
   {
       Information("Restoring Solution Packages");
-      DotNetCoreRestore(SolutionFileName, new DotNetCoreRestoreSettings()
+      DotNetRestore(SolutionFileName, new DotNetRestoreSettings()
       {
           Sources = new[] { nugetRepositoryProxy },
           NoCache = true
@@ -101,9 +101,9 @@ Task("Build")
   .IsDependentOn("Restore")
   .Does(() => 
   {
-      DotNetCoreBuild(
+      DotNetBuild(
                   SolutionFileName,
-                  new DotNetCoreBuildSettings()
+                  new DotNetBuildSettings()
                   {
                       Configuration = buildConfiguration,
                       ArgumentCustomization = args => args
@@ -117,7 +117,7 @@ Task("Build")
       EnsureDirectoryExists(packageOutputDirectory);
       CleanDirectory(packageOutputDirectory);
 
-      var settings = new DotNetCorePackSettings
+      var settings = new DotNetPackSettings
         {
             Configuration = buildConfiguration,
             OutputDirectory = packageOutputDirectory,
@@ -126,7 +126,7 @@ Task("Build")
                 .Append($"/p:Version={NuGetVersionV2}")
         };
 
-        DotNetCorePack("src/StoneAssemblies.Extensibility.DemoPlugin/StoneAssemblies.Extensibility.DemoPlugin.csproj", settings);
+        DotNetPack("src/StoneAssemblies.Extensibility.DemoPlugin/StoneAssemblies.Extensibility.DemoPlugin.csproj", settings);
   }); 
 
 Task("Test")
