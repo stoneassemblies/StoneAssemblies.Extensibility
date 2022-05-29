@@ -52,7 +52,7 @@ namespace StoneAssemblies.Extensibility.Services
         /// <summary>
         ///     The plugins directory folder name.
         /// </summary>
-        public string ExtensionDirectoryName { get; } = "plugins";
+        public string ExtensionsDirectoryName { get; } = "plugins";
 
         /// <summary>
         ///     The target framework dependencies.
@@ -105,7 +105,7 @@ namespace StoneAssemblies.Extensibility.Services
         /// <param name="packageSources">
         ///     The package sources.
         /// </param>
-        /// <param name="extensionDirectoryName">
+        /// <param name="extensionsDirectoryName">
         ///     The plugins directory folder name.
         /// </param>
         /// <param name="cacheDirectoryName">
@@ -118,16 +118,16 @@ namespace StoneAssemblies.Extensibility.Services
             IServiceCollection serviceCollection,
             IConfiguration configuration,
             List<string> packageSources = null,
-            string extensionDirectoryName = null,
-            string cacheDirectoryName = null,
-            string dependenciesDirectoryName = null)
+            string extensionsDirectoryName = "plugins",
+            string cacheDirectoryName = "cache",
+            string dependenciesDirectoryName = "lib")
         {
             this.configuration = configuration;
             this.serviceCollection = serviceCollection;
 
-            if (!string.IsNullOrWhiteSpace(extensionDirectoryName))
+            if (!string.IsNullOrWhiteSpace(extensionsDirectoryName))
             {
-                this.ExtensionDirectoryName = extensionDirectoryName;
+                this.ExtensionsDirectoryName = extensionsDirectoryName;
             }
 
             if (!string.IsNullOrWhiteSpace(dependenciesDirectoryName))
@@ -401,14 +401,14 @@ namespace StoneAssemblies.Extensibility.Services
                 return false;
             }
 
-            var pluginsDirectoryPath = Path.GetFullPath(this.ExtensionDirectoryName);
+            var pluginsDirectoryPath = Path.GetFullPath(this.ExtensionsDirectoryName);
             if (!Directory.Exists(pluginsDirectoryPath))
             {
-                Log.Information("Creating {Directory} directory", this.ExtensionDirectoryName);
+                Log.Information("Creating {Directory} directory", this.ExtensionsDirectoryName);
 
                 Directory.CreateDirectory(pluginsDirectoryPath);
 
-                Log.Information("Created {Directory} directory", this.ExtensionDirectoryName);
+                Log.Information("Created {Directory} directory", this.ExtensionsDirectoryName);
             }
 
             var packageDependency = new PackageDependency(packageId, new VersionRange(packageVersion));
