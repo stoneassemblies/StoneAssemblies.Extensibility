@@ -8,8 +8,6 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
 {
     using System;
     using System.Collections;
-    using System.Collections.Generic;
-    using System.Data.SqlClient;
 
     using Microsoft.Data.SqlClient;
     using Microsoft.Extensions.Configuration;
@@ -60,9 +58,10 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
             var implementationInstance = new SqlConnection();
-            implementationInstance.ConnectionString =
-                "Server=localhost;Database=Users;User Id=sa;Password=Password123!;TrustServerCertificate=true";
-            implementationInstance.Open();
+            
+            //implementationInstance.ConnectionString =
+            //    "Server=localhost;Database=Users;User Id=sa;Password=Password123!;TrustServerCertificate=true";
+            //implementationInstance.Open();
 
             serviceCollection.AddSingleton(implementationInstance);
         }
