@@ -26,6 +26,7 @@ namespace StoneAssemblies.Extensibility.Services.Helpers
         public static readonly string[] TargetFrameworks =
             {
 #if NET5_0_OR_GREATER
+                "net6.0",
                 "net5.0",
 #endif
                 "netcoreapp3.1",

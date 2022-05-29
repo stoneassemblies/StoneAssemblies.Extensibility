@@ -29,10 +29,11 @@ namespace StoneAssemblies.Extensibility.Services.Interfaces
         /// <param name="packageIds">
         ///     The package ids.
         /// </param>
-        /// <returns>
+        /// <param name="initialize"></param>
+        /// /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        Task LoadExtensionsAsync(List<string> packageIds = null);
+        Task LoadExtensionsAsync(List<string> packageIds = null, bool initialize = true);
 
         /// <summary>
         /// Call configure method of all start up objects that match with give arguments types.

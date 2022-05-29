@@ -6,29 +6,6 @@
 
 namespace StoneAssemblies.Extensibility.Services
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Reflection;
-    using System.Runtime.InteropServices;
-    using System.Runtime.Loader;
-    using System.Threading;
-    using System.Threading.Tasks;
-
-    using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.DependencyInjection;
-
-    using NuGet.Common;
-    using NuGet.Packaging;
-    using NuGet.Packaging.Core;
-    using NuGet.Protocol;
-    using NuGet.Protocol.Core.Types;
-    using NuGet.Versioning;
-
-    using Serilog;
-
     using StoneAssemblies.Extensibility.Extensions;
     using StoneAssemblies.Extensibility.Services.Helpers;
     using StoneAssemblies.Extensibility.Services.Interfaces;
@@ -41,17 +18,17 @@ namespace StoneAssemblies.Extensibility.Services
         /// <summary>
         ///     The cache directory folder name.
         /// </summary>
-        private const string CacheDirectoryFolderName = "cache";
+        public string CacheDirectoryName { get; } = "cache";
 
         /// <summary>
         ///     The dependencies directory folder name.
         /// </summary>
-        private const string DependenciesDirectoryFolderName = "lib";
+        public string DependenciesDirectoryName { get; } = "lib";
 
         /// <summary>
         ///     The plugins directory folder name.
         /// </summary>
-        private const string PluginsDirectoryFolderName = "plugins";
+        public string ExtensionDirectoryName { get; } = "plugins";
 
         /// <summary>
         ///     The target framework dependencies.
@@ -59,6 +36,7 @@ namespace StoneAssemblies.Extensibility.Services
         private static readonly string[] TargetFrameworkDependencies =
             {
 #if NET5_0_OR_GREATER
+                ".NETCoreApp,Version=v6.0",
                 ".NETCoreApp,Version=v5.0",
 #endif
                 ".NETCoreApp,Version=v3.1",
@@ -103,36 +81,100 @@ namespace StoneAssemblies.Extensibility.Services
         /// <param name="packageSources">
         ///     The package sources.
         /// </param>
+        /// <param name="extensionDirectoryName">
+        ///     The plugins directory folder name.
+        /// </param>
+        /// <param name="cacheDirectoryName">
+        ///     The cache directory folder name.
+        /// </param>
+        /// <param name="dependenciesDirectoryName">
+        ///     The dependencies directory folder name,
+        /// </param>
         public ExtensionManager(
             IServiceCollection serviceCollection,
             IConfiguration configuration,
-            List<string> packageSources = null)
+            List<string> packageSources = null,
+            string extensionDirectoryName = null,
+            string cacheDirectoryName = null,
+            string dependenciesDirectoryName = null)
         {
             this.configuration = configuration;
             this.serviceCollection = serviceCollection;
 
+            if (!string.IsNullOrWhiteSpace(extensionDirectoryName))
+            {
+                this.ExtensionDirectoryName = extensionDirectoryName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dependenciesDirectoryName))
+            {
+                this.DependenciesDirectoryName = dependenciesDirectoryName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(cacheDirectoryName))
+            {
+                this.CacheDirectoryName = cacheDirectoryName;
+            }
+
+
+
             AssemblyLoadContext.Default.ResolvingUnmanagedDll += this.OnAssemblyLoadContextResolvingUnmanagedDll;
             AppDomain.CurrentDomain.AssemblyResolve += this.OnCurrentAppDomainAssemblyResolve;
 
-            var sources = new List<string>();
-            this.configuration?.GetSection("Extensions")?.GetSection("Sources")?.Bind(sources);
+            var extensionSources = new List<ExtensionSource>();
+            this.configuration?.GetSection("Extensions")?.GetSection("Sources")?.Bind(extensionSources);
 
-            if (packageSources != null)
-            {
-                sources.AddRange(packageSources);
-            }
-
-            foreach (var source in sources)
+            foreach (var extensionSource in extensionSources)
             {
                 try
                 {
-                    var s = source;
-                    if (!Uri.TryCreate(s, UriKind.Absolute, out _) && Directory.Exists(s))
+                    var source = extensionSource;
+                    if (!Uri.TryCreate(source.Uri, UriKind.Absolute, out _) && Directory.Exists(source.Uri))
                     {
-                        s = Path.GetFullPath(s);
+                        source.Uri = Path.GetFullPath(source.Uri);
                     }
 
-                    var sourceRepository = Repository.Factory.GetCoreV3(s);
+                    SourceRepository sourceRepository = null;
+                    if (!string.IsNullOrWhiteSpace(source.Username) && !string.IsNullOrWhiteSpace(source.Password))
+                    {
+                        var packageSource = new PackageSource(source.Uri)
+                        {
+                            Credentials = new PackageSourceCredential(extensionSource.Uri, extensionSource.Username, extensionSource.Password, true, null),
+                        };
+
+                        sourceRepository = Repository.Factory.GetCoreV3(packageSource);
+                    }
+                    else
+                    {
+                        sourceRepository = Repository.Factory.GetCoreV3(source.Uri);
+                    }
+
+                    this.sourceRepositories.Add(sourceRepository);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "Error creating source repository");
+                }
+            }
+
+            var flatExtensionSources = new List<string>();
+            this.configuration?.GetSection("Extensions")?.GetSection("Sources")?.Bind(flatExtensionSources);
+            if (packageSources != null)
+            {
+                flatExtensionSources.AddRange(packageSources);
+            }
+
+            foreach (var flatExtensionSource in flatExtensionSources)
+            {
+                try
+                {
+                    var extensionSource = flatExtensionSource;
+                    if (!Uri.TryCreate(extensionSource, UriKind.Absolute, out _) && Directory.Exists(extensionSource))
+                    {
+                        extensionSource = Path.GetFullPath(extensionSource);
+                    }
+
+                    var sourceRepository = Repository.Factory.GetCoreV3(extensionSource);
                     this.sourceRepositories.Add(sourceRepository);
                 }
                 catch (Exception e)
@@ -162,13 +204,18 @@ namespace StoneAssemblies.Extensibility.Services
         /// <param name="packageIds">
         ///     The package ids.
         /// </param>
+        /// <param name="initialize">
+        /// </param>
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        async Task IExtensionManager.LoadExtensionsAsync(List<string> packageIds)
+        async Task IExtensionManager.LoadExtensionsAsync(List<string> packageIds = null, bool initialize = true)
         {
             await this.LoadExtensionsAsync(packageIds);
-            this.InitializeExtensions();
+            if (initialize)
+            {
+                this.InitializeExtensions();
+            }
         }
 
         /// <inheritdoc />
@@ -330,14 +377,14 @@ namespace StoneAssemblies.Extensibility.Services
                 return false;
             }
 
-            var pluginsDirectoryPath = Path.GetFullPath(PluginsDirectoryFolderName);
+            var pluginsDirectoryPath = Path.GetFullPath(this.ExtensionDirectoryName);
             if (!Directory.Exists(pluginsDirectoryPath))
             {
-                Log.Information("Creating {Directory} directory", PluginsDirectoryFolderName);
+                Log.Information("Creating {Directory} directory", this.ExtensionDirectoryName);
 
                 Directory.CreateDirectory(pluginsDirectoryPath);
 
-                Log.Information("Created {Directory} directory", PluginsDirectoryFolderName);
+                Log.Information("Created {Directory} directory", this.ExtensionDirectoryName);
             }
 
             var packageDependency = new PackageDependency(packageId, new VersionRange(packageVersion));
@@ -368,7 +415,7 @@ namespace StoneAssemblies.Extensibility.Services
                             a => packageName.Equals(a.GetName()?.Name, StringComparison.InvariantCultureIgnoreCase));
                         if (assembly == null)
                         {
-                            await this.EnsureDownloadPackageAsync(packageDependency, DependenciesDirectoryFolderName);
+                            await this.EnsureDownloadPackageAsync(packageDependency, this.DependenciesDirectoryName);
                         }
                         else
                         {
@@ -435,19 +482,19 @@ namespace StoneAssemblies.Extensibility.Services
                     Log.Information(
                         "Searching {PackageId} {PackageVersion} in source {PackageSource}",
                         package.Id,
-                        package.VersionRange.OriginalString,
+                        package.VersionRange.ToString(),
                         sourceRepository.PackageSource.SourceUri);
 
                     var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
 
-                    var cacheDirectoryFolderName = Path.GetFullPath(CacheDirectoryFolderName);
+                    var cacheDirectoryFolderName = Path.GetFullPath(this.CacheDirectoryName);
                     if (!Directory.Exists(cacheDirectoryFolderName))
                     {
-                        Log.Information("Creating {Directory} directory", CacheDirectoryFolderName);
+                        Log.Information("Creating {Directory} directory", this.CacheDirectoryName);
 
                         Directory.CreateDirectory(cacheDirectoryFolderName);
 
-                        Log.Information("Created {Directory} directory", CacheDirectoryFolderName);
+                        Log.Information("Created {Directory} directory", this.CacheDirectoryName);
                     }
 
                     var packageId = package.Id;
@@ -463,11 +510,11 @@ namespace StoneAssemblies.Extensibility.Services
                         Log.Information(
                             "Found {PackageId} {PackageVersion} in source {PackageSource}",
                             package.Id,
-                            package.VersionRange.OriginalString,
+                            package.VersionRange.ToString(),
                             sourceRepository.PackageSource.SourceUri);
 
                         var packageFileName = Path.Combine(
-                            CacheDirectoryFolderName,
+                            this.CacheDirectoryName,
                             $"{packageId}.{packageVersion.OriginalVersion}.nupkg");
 
                         if (await resource.DownloadPackageAsync(package, packageVersion, packageFileName))
@@ -517,7 +564,7 @@ namespace StoneAssemblies.Extensibility.Services
         /// </returns>
         private IntPtr OnAssemblyLoadContextResolvingUnmanagedDll(Assembly assembly, string libraryFileName)
         {
-            var dependencyDirectoryFullPath = Path.GetFullPath(DependenciesDirectoryFolderName);
+            var dependencyDirectoryFullPath = Path.GetFullPath(this.DependenciesDirectoryName);
             var libraryPaths = Directory.EnumerateFiles(
                 dependencyDirectoryFullPath,
                 libraryFileName,
@@ -594,7 +641,7 @@ namespace StoneAssemblies.Extensibility.Services
                 {
                     Log.Information("Loading assembly from {FileName} from lib directory", fileName);
 
-                    var directoryPath = Path.GetFullPath(DependenciesDirectoryFolderName);
+                    var directoryPath = Path.GetFullPath(this.DependenciesDirectoryName);
                     assembly = AssemblyLoader.LoadAssemblyFrom(directoryPath, fileName);
 
                     if (assembly != null)

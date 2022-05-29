@@ -59,7 +59,12 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// </param>
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
-            serviceCollection.AddSingleton(new SqlConnection());
+            var implementationInstance = new SqlConnection();
+            implementationInstance.ConnectionString =
+                "Server=localhost;Database=Users;User Id=sa;Password=Password123!;TrustServerCertificate=true";
+            implementationInstance.Open();
+
+            serviceCollection.AddSingleton(implementationInstance);
         }
 
         /// <summary>
