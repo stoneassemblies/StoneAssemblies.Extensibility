@@ -87,7 +87,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 new List<string>
                     {
                         "../../../../../output/nuget-local/",
-                        "http://localhost:8081/repository/nuget-proxy-internet/"
+                        "https://api.nuget.org/v3/index.json"
                     });
 
             await extensionManager.LoadExtensionsAsync(
@@ -115,7 +115,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             var dictionary = new Dictionary<string, string>
                                  {
                                      { "Extensions:Sources:0", "../../../../../output/nuget-local/" },
-                                     { "Extensions:Sources:1", "http://localhost:8081/repository/nuget-proxy-internet/" },
+                                     { "Extensions:Sources:1", "https://api.nuget.org/v3/index.json" },
                                      { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
                                  };
 
@@ -149,7 +149,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 new List<string>
                     {
                         "../../../../../output/nuget-local/",
-                        "http://localhost:8081/repository/nuget-proxy-internet/"
+                        "https://api.nuget.org/v3/index.json"
                     });
 
             await extensionManager.LoadExtensionsAsync(
@@ -181,7 +181,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 new List<string>
                     {
                         "../../../../../output/nuget-local/",
-                        "http://localhost:8081/repository/nuget-proxy-internet/"
+                        "https://api.nuget.org/v3/index.json"
                     });
 
             Assert.NotEmpty(serviceCollection);
@@ -207,7 +207,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 new List<string>
                     {
                         "../../../../../output/nuget-local/",
-                        "http://localhost:8081/repository/nuget-proxy-internet/"
+                        "https://api.nuget.org/v3/index.json"
                     });
 
             await extensionManager.LoadExtensionsAsync();
@@ -223,7 +223,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             var dictionary = new Dictionary<string, string>
                                  {
                                      { "Extensions:Sources:0", "../../../../../output/nuget-local/" },
-                                     { "Extensions:Sources:1", "http://localhost:8081/repository/nuget-proxy-internet/" },
+                                     { "Extensions:Sources:1", "https://api.nuget.org/v3/index.json" },
                                      { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
                                  };
 
@@ -260,7 +260,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                                          "Extensions:Sources:0", "../../../../../output/nuget-local/"
                                      },
                                      {
-                                         "Extensions:Sources:1", "http://localhost:8081/repository/nuget-proxy-internet/"
+                                         "Extensions:Sources:1", "https://api.nuget.org/v3/index.json"
                                      },
                                      {
                                          "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin"
@@ -292,7 +292,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             var dictionary = new Dictionary<string, string>
                                  {
                                      { "Extensions:Sources:0", "../../../../../output/nuget-local/" },
-                                     { "Extensions:Sources:1", "http://localhost:8081/repository/nuget-proxy-internet/" },
+                                     { "Extensions:Sources:1", "https://api.nuget.org/v3/index.json" },
                                      { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
                                  };
 
