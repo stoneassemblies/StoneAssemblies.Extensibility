@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace StoneAssemblies.Extensibility.Services
+namespace StoneAssemblies.Extensibility
 {
     using System;
     using System.Collections;
@@ -29,10 +29,7 @@ namespace StoneAssemblies.Extensibility.Services
     using NuGet.Versioning;
 
     using Serilog;
-
-    using StoneAssemblies.Extensibility.Extensions;
-    using StoneAssemblies.Extensibility.Services.Helpers;
-    using StoneAssemblies.Extensibility.Services.Interfaces;
+    using StoneAssemblies.Extensibility.Models;
 
     /// <summary>
     ///     The extension manager.

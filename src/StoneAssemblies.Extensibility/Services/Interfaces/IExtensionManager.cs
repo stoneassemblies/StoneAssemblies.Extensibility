@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace StoneAssemblies.Extensibility.Services.Interfaces
+namespace StoneAssemblies.Extensibility
 {
     using System.Collections.Generic;
     using System.Reflection;

@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace StoneAssemblies.Extensibility.Extensions
+namespace StoneAssemblies.Extensibility
 {
     using System;
     using System.IO;

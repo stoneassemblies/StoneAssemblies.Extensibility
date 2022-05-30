@@ -13,8 +13,6 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
-    using StoneAssemblies.Extensibility.Services.Interfaces;
-
     /// <summary>
     ///     The plugin startup.
     /// </summary>

@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace StoneAssemblies.Extensibility.Extensions
+namespace StoneAssemblies.Extensibility
 {
     using System;
     using System.Collections.Generic;
@@ -15,8 +15,6 @@ namespace StoneAssemblies.Extensibility.Extensions
     using Microsoft.Extensions.DependencyInjection;
 
     using Serilog;
-
-    using StoneAssemblies.Extensibility.Services.Interfaces;
 
     /// <summary>
     ///     The Assembly extensions.

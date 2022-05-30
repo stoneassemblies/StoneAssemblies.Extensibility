@@ -4,7 +4,7 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace StoneAssemblies.Extensibility.Services.Helpers
+namespace StoneAssemblies.Extensibility
 {
     using System.IO;
     using System.IO.Compression;

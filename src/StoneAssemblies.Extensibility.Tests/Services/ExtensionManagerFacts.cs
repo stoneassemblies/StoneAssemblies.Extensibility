@@ -18,10 +18,6 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
     using Serilog;
 
-    using StoneAssemblies.Extensibility.Extensions;
-    using StoneAssemblies.Extensibility.Services;
-    using StoneAssemblies.Extensibility.Services.Interfaces;
-
     using Xunit;
     using Xunit.Abstractions;
 

@@ -4,15 +4,12 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace StoneAssemblies.Extensibility.Extensions
+namespace StoneAssemblies.Extensibility
 {
     using System.Collections.Generic;
 
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
-
-    using StoneAssemblies.Extensibility.Services;
-    using StoneAssemblies.Extensibility.Services.Interfaces;
 
     /// <summary>
     ///     The service collection extensions.
