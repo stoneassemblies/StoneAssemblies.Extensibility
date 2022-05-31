@@ -4,10 +4,10 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
+using System;
+
 namespace StoneAssemblies.Extensibility
 {
-    using System.Collections.Generic;
-
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
@@ -25,40 +25,26 @@ namespace StoneAssemblies.Extensibility
         /// <param name="configuration">
         ///     The configuration.
         /// </param>
-        /// <param name="packages">
-        ///     The packages.
-        /// </param>
-        /// <param name="packageSources">
-        ///     The package sources.
-        /// </param>
-        /// <param name="extensionsDirectoryName">
-        ///     The extension directory name.
-        /// </param>
-        /// <param name="cacheDirectoryName">
-        ///     The cache directory name for extensions.
-        /// </param>
-        /// <param name="dependenciesDirectoryName">
-        ///     The extensions dependencies directory name.
-        /// </param>
-        /// <param name="initialize">
-        ///     Indicates whether the extension will be initialized.
+        /// <param name="configure">
+        ///     The configure action.
         /// </param>
         /// <returns>
         ///     The <see cref="IExtensionManager" />.
         /// </returns>
         public static IExtensionManager AddExtensions(
             this IServiceCollection serviceCollection,
-            IConfiguration configuration,
-            List<string> packages = null,
-            List<string> packageSources = null,
-            string extensionsDirectoryName = "plugins",
-            string cacheDirectoryName = "cache",
-            string dependenciesDirectoryName = "lib",
-            bool initialize = true)
+            IConfiguration configuration, Action<ExtensionManagerSettings> configure = null)
         {
-            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, packageSources, extensionsDirectoryName, cacheDirectoryName, dependenciesDirectoryName);
+            var settings = new ExtensionManagerSettings();
+            configuration?.GetSection("Extensions")?.Bind(settings);
+            if (configure != null)
+            {
+                configure(settings);
+            }
+
+            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
             serviceCollection.AddSingleton(extensionManager);
-            extensionManager.LoadExtensionsAsync(packages, initialize).GetAwaiter().GetResult();
+            extensionManager.LoadExtensionsAsync().GetAwaiter().GetResult();
             return extensionManager;
         }
     }

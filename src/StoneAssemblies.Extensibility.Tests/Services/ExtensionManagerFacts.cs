@@ -27,7 +27,12 @@ namespace StoneAssemblies.Extensibility.Tests.Services
     [CollectionDefinition(nameof(ExtensionManagerFacts), DisableParallelization = true)]
     public class ExtensionManagerFacts
     {
-
+        /// <summary>
+        ///     Initializes the ExtensionManagerFacts
+        /// </summary>
+        /// <param name="output">
+        ///     The output.
+        /// </param>
         public ExtensionManagerFacts(ITestOutputHelper output)
         {
             Log.Logger = new LoggerConfiguration()
@@ -50,16 +55,18 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             var serviceCollection = new ServiceCollection();
 
             var extensionManager = serviceCollection.AddExtensions(
-                configurationMock.Object,
-                new List<string>
+                configurationMock.Object, settings =>
+                {
+                    settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
+                    settings.Sources.Add(new ExtensionSource
                     {
-                        "StoneAssemblies.Extensibility.DemoPlugin"
-                    },
-                new List<string>
-                    {
-                        "../../../../../output/nuget-local/",
-                        "http://localhost:8081/repository/nuget-all/"
+                        Uri = "../../../../../output/nuget-local/"
                     });
+                    settings.Sources.Add(new ExtensionSource
+                    {
+                        Uri = "https://api.nuget.org/v3/index.json"
+                    });
+                });
 
             Assert.NotNull(extensionManager);
 
@@ -81,20 +88,23 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             var configurationMock = new Mock<IConfiguration>();
             var serviceCollection = new ServiceCollection();
 
+            var settings = new ExtensionManagerSettings();
+            settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
+
+            settings.Sources.Add(new ExtensionSource
+            {
+                Uri = "../../../../../output/nuget-local/"
+            });
+            settings.Sources.Add(new ExtensionSource
+            {
+                Uri = "https://api.nuget.org/v3/index.json"
+            });
+
             IExtensionManager extensionManager = new ExtensionManager(
                 serviceCollection,
-                configurationMock.Object,
-                new List<string>
-                    {
-                        "../../../../../output/nuget-local/",
-                        "https://api.nuget.org/v3/index.json"
-                    });
+                configurationMock.Object, settings);
 
-            await extensionManager.LoadExtensionsAsync(
-                new List<string>
-                    {
-                        "StoneAssemblies.Extensibility.DemoPlugin"
-                    });
+            await extensionManager.LoadExtensionsAsync();
 
             Assert.NotEmpty(serviceCollection);
 
@@ -114,14 +124,16 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
             var dictionary = new Dictionary<string, string>
                                  {
-                                     { "Extensions:Sources:0", "../../../../../output/nuget-local/" },
-                                     { "Extensions:Sources:1", "https://api.nuget.org/v3/index.json" },
+                                     { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
+                                     { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
                                      { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
                                  };
 
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
             var serviceCollection = new ServiceCollection();
-            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration);
+            var settings = new ExtensionManagerSettings();
+            configuration.GetSection("Extensions")?.Bind(settings);
+            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
 
             await extensionManager.LoadExtensionsAsync();
 
@@ -143,20 +155,24 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             var configurationMock = new Mock<IConfiguration>();
             var serviceCollection = new ServiceCollection();
 
+            var settings = new ExtensionManagerSettings();
+            settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
+
+            settings.Sources.Add(new ExtensionSource
+            {
+                Uri = "../../../../../output/nuget-local/"
+            });
+            settings.Sources.Add(new ExtensionSource
+            {
+                Uri = "https://api.nuget.org/v3/index.json"
+            });
+
             IExtensionManager extensionManager = new ExtensionManager(
                 serviceCollection,
                 configurationMock.Object,
-                new List<string>
-                    {
-                        "../../../../../output/nuget-local/",
-                        "https://api.nuget.org/v3/index.json"
-                    });
+                settings);
 
-            await extensionManager.LoadExtensionsAsync(
-                new List<string>
-                    {
-                        "StoneAssemblies.Extensibility.DemoPlugin"
-                    });
+            await extensionManager.LoadExtensionsAsync();
 
             Assert.Single(extensionManager.GetExtensionAssemblies());
             Log.Information("Finished {MethodName}", nameof(Loads_Extensions_Assemblies_Available_Via_GetExtensionAssemblies_Method));
@@ -174,15 +190,18 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
             serviceCollection.AddExtensions(
                 configurationMock.Object,
-                new List<string>
+                settings =>
+                {
+                    settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
+                    settings.Sources.Add(new ExtensionSource
                     {
-                        "StoneAssemblies.Extensibility.DemoPlugin"
-                    },
-                new List<string>
-                    {
-                        "../../../../../output/nuget-local/",
-                        "https://api.nuget.org/v3/index.json"
+                        Uri = "../../../../../output/nuget-local/"
                     });
+                    settings.Sources.Add(new ExtensionSource
+                    {
+                        Uri = "https://api.nuget.org/v3/index.json"
+                    });
+                });
 
             Assert.NotEmpty(serviceCollection);
             Log.Information("Finished {MethodName}", nameof(Registers_Services_In_ServiceCollection));
@@ -197,23 +216,28 @@ namespace StoneAssemblies.Extensibility.Tests.Services
         [Fact]
         public async Task Succeeds_Without_Exception_With_Empty_Configuration()
         {
-            Log.Information("Starting {MethodName}", nameof(Succeeds_Without_Exception_With_Empty_Configuration));
+            Log.Information("Starting {MethodName}", nameof(this.Succeeds_Without_Exception_With_Empty_Configuration));
             var configurationMock = new Mock<IConfiguration>();
             var serviceCollection = new ServiceCollection();
 
+            var settings = new ExtensionManagerSettings();
+            settings.Sources.Add(new ExtensionSource
+            {
+                Uri = "../../../../../output/nuget-local/",
+            });
+            settings.Sources.Add(new ExtensionSource
+            {
+                Uri = "https://api.nuget.org/v3/index.json",
+            });
+
             IExtensionManager extensionManager = new ExtensionManager(
                 serviceCollection,
-                configurationMock.Object,
-                new List<string>
-                    {
-                        "../../../../../output/nuget-local/",
-                        "https://api.nuget.org/v3/index.json"
-                    });
+                configurationMock.Object, settings);
 
             await extensionManager.LoadExtensionsAsync();
 
             Assert.Empty(serviceCollection);
-            Log.Information("Finished {MethodName}", nameof(Succeeds_Without_Exception_With_Empty_Configuration));
+            Log.Information("Finished {MethodName}", nameof(this.Succeeds_Without_Exception_With_Empty_Configuration));
         }
 
         [Fact]
@@ -221,15 +245,18 @@ namespace StoneAssemblies.Extensibility.Tests.Services
         {
             Log.Information("Starting {MethodName}", nameof(The_Configure_Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature));
             var dictionary = new Dictionary<string, string>
-                                 {
-                                     { "Extensions:Sources:0", "../../../../../output/nuget-local/" },
-                                     { "Extensions:Sources:1", "https://api.nuget.org/v3/index.json" },
-                                     { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
-                                 };
+            {
+                { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
+                { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
+                { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
+            };
 
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
             var serviceCollection = new ServiceCollection();
-            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration);
+
+            var settings = new ExtensionManagerSettings();
+            configuration.GetSection("Extensions").Bind(settings);
+            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
 
             await extensionManager.LoadExtensionsAsync();
 
@@ -240,8 +267,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 new Action<string>(
                     s =>
                         {
-                        called = true;
-                    }),
+                            called = true;
+                        }),
                 list);
 
             Assert.True(called);
@@ -255,21 +282,17 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             Log.Information("Starting {MethodName}", nameof(The_Configure_Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
 
             var dictionary = new Dictionary<string, string>
-                                 {
-                                     {
-                                         "Extensions:Sources:0", "../../../../../output/nuget-local/"
-                                     },
-                                     {
-                                         "Extensions:Sources:1", "https://api.nuget.org/v3/index.json"
-                                     },
-                                     {
-                                         "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin"
-                                     }
-                                 };
+            {
+                { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
+                { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
+                { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
+            };
 
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
             var serviceCollection = new ServiceCollection();
-            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration);
+            var settings = new ExtensionManagerSettings();
+            configuration.GetSection("Extensions").Bind(settings);
+            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
 
             await extensionManager.LoadExtensionsAsync();
 
@@ -291,14 +314,16 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             Log.Information("Starting {MethodName}", nameof(The_Configure_Method_Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature));
             var dictionary = new Dictionary<string, string>
                                  {
-                                     { "Extensions:Sources:0", "../../../../../output/nuget-local/" },
-                                     { "Extensions:Sources:1", "https://api.nuget.org/v3/index.json" },
+                                     { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
+                                     { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
                                      { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
                                  };
 
             var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
             var serviceCollection = new ServiceCollection();
-            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration);
+            var settings = new ExtensionManagerSettings();
+            configuration.GetSection("Extensions").Bind(settings);
+            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
 
             await extensionManager.LoadExtensionsAsync();
 
@@ -307,8 +332,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 new Action<string>(
                     s =>
                         {
-                        called = true;
-                    }));
+                            called = true;
+                        }));
 
             Assert.False(called);
             Log.Information("Finished {MethodName}", nameof(The_Configure_Method_Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature));
