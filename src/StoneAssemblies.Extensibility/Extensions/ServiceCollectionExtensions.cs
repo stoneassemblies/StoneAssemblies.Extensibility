@@ -4,6 +4,8 @@
 // </copyright>
 // --------------------------------------------------------------------------------------------------------------------
 
+using System;
+
 namespace StoneAssemblies.Extensibility
 {
     using Microsoft.Extensions.Configuration;
@@ -23,38 +25,23 @@ namespace StoneAssemblies.Extensibility
         /// <param name="configuration">
         ///     The configuration.
         /// </param>
+        /// <param name="configure">
+        ///     The configure action.
+        /// </param>
         /// <returns>
         ///     The <see cref="IExtensionManager" />.
         /// </returns>
         public static IExtensionManager AddExtensions(
             this IServiceCollection serviceCollection,
-            IConfiguration configuration)
+            IConfiguration configuration, Action<ExtensionManagerSettings> configure = null)
         {
-            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration);
-            serviceCollection.AddSingleton(extensionManager);
-            extensionManager.LoadExtensionsAsync().GetAwaiter().GetResult();
-            return extensionManager;
-        }
+            var settings = new ExtensionManagerSettings();
+            configuration?.GetSection("Extensions")?.Bind(settings);
+            if (configure != null)
+            {
+                configure(settings);
+            }
 
-        /// <summary>
-        ///     Add the extension manager.
-        /// </summary>
-        /// <param name="serviceCollection">
-        ///     The service collection.
-        /// </param>
-        /// <param name="configuration">
-        ///     The configuration.
-        /// </param>
-        /// <param name="settings">
-        ///     The ExtensionManagerSettings.
-        /// </param>
-        /// <returns>
-        ///     The <see cref="IExtensionManager" />.
-        /// </returns>
-        public static IExtensionManager AddExtensions(
-            this IServiceCollection serviceCollection,
-            IConfiguration configuration, ExtensionManagerSettings settings)
-        {
             IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
             serviceCollection.AddSingleton(extensionManager);
             extensionManager.LoadExtensionsAsync().GetAwaiter().GetResult();

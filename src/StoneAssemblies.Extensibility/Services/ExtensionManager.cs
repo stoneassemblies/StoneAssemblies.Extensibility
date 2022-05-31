@@ -35,7 +35,7 @@ namespace StoneAssemblies.Extensibility
     /// </summary>
     public class ExtensionManager : IExtensionManager
     {
-        private ExtensionManagerSettings settings;
+        private readonly ExtensionManagerSettings settings;
 
         /// <summary>
         ///     The target framework dependencies.
@@ -82,27 +82,9 @@ namespace StoneAssemblies.Extensibility
         /// </summary>
         public ExtensionManager(IServiceCollection serviceCollection, IConfiguration configuration, ExtensionManagerSettings settings)
         {
-            this.serviceCollection = serviceCollection;
-            this.configuration = configuration;
-            this.settings = settings;
-            this.Initialize();
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="ExtensionManager" /> class.
-        /// </summary>
-        /// <param name="configuration">
-        ///     The configuration.
-        /// </param>
-        /// <param name="serviceCollection">
-        ///     The service collection.
-        /// </param>
-        public ExtensionManager(
-            IServiceCollection serviceCollection,
-            IConfiguration configuration)
-        {
-            this.configuration = configuration;
-            this.serviceCollection = serviceCollection;
+            this.serviceCollection = serviceCollection ?? throw new ArgumentNullException(nameof(serviceCollection));
+            this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
             this.Initialize();
         }
 
@@ -110,13 +92,6 @@ namespace StoneAssemblies.Extensibility
         {
             AssemblyLoadContext.Default.ResolvingUnmanagedDll += this.OnAssemblyLoadContextResolvingUnmanagedDll;
             AppDomain.CurrentDomain.AssemblyResolve += this.OnCurrentAppDomainAssemblyResolve;
-
-            if (this.settings == null)
-            {
-                this.settings = new ExtensionManagerSettings();
-                configuration?.GetSection("Extensions")?.Bind(this.settings);
-            }
-
             var extensionSources = new List<ExtensionSource>();
             if (this.settings.Sources != null)
             {
