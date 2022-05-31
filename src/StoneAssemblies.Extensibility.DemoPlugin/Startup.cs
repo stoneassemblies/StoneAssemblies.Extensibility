@@ -56,7 +56,7 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
             var implementationInstance = new SqlConnection();
-            
+
             //implementationInstance.ConnectionString =
             //    "Server=localhost;Database=Users;User Id=sa;Password=Password123!;TrustServerCertificate=true";
             //implementationInstance.Open();

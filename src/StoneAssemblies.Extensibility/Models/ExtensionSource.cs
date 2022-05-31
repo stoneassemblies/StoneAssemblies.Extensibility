@@ -1,5 +1,6 @@
-﻿namespace StoneAssemblies.Extensibility.Models
+﻿namespace StoneAssemblies.Extensibility
 {
+
     /// <summary>
     /// The extension source.
     /// </summary>
