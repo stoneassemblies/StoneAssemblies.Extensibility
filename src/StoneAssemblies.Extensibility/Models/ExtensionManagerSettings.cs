@@ -20,7 +20,7 @@
         /// <summary>
         ///     Gets or set the cache directory.
         /// </summary>
-        public string CacheDirectory { get; set; } = "plugins";
+        public string CacheDirectory { get; set; } = "cache";
 
         /// <summary>
         ///     Gets The packages.
