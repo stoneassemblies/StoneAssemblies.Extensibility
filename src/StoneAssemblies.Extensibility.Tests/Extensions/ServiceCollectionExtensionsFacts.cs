@@ -10,24 +10,27 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
     using Microsoft.Extensions.DependencyInjection;
     using Moq;
 
+    using NUnit.Framework;
+
     using Serilog;
 
-    using Xunit;
 
     /// <summary>
     ///     The service collection extensions facts.
     /// </summary>
+    [TestFixture]
     public class ServiceCollectionExtensionsFacts
     {
         /// <summary>
         ///     The add extensions method.
         /// </summary>
+        [TestFixture]
         public class The_AddExtensions_Method
         {
             /// <summary>
             ///     Initializes the plugin registering services in service collection.
             /// </summary>
-            [Fact]
+            [Test]
             public void Initializes_The_Plugin_Registering_Services_In_ServiceCollection()
             {
                 var configurationMock = new Mock<IConfiguration>();
@@ -42,13 +45,13 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                             settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
                         });
 
-                Assert.Equal(2, serviceCollection.Count);
+                Assert.AreEqual(2, serviceCollection.Count);
             }
 
             /// <summary>
             ///     Does not initialize the plugin without registering services in service collection.
             /// </summary>
-            [Fact]
+            [Test]
             public void Does_Not_Initialize_The_Plugin_Without_Registering_Services_In_ServiceCollection()
             {
                 var configurationMock = new Mock<IConfiguration>();
@@ -65,14 +68,14 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                             settings.Initialize = false;
                         });
 
-                Assert.Single(serviceCollection);
+                Assert.AreEqual(1, serviceCollection.Count);
             }
         }
 
         /// <summary>
         ///     Registers services in service collection.
         /// </summary>
-        [Fact]
+        [Test]
         public void Registers_Services_In_ServiceCollection()
         {
             var configurationMock = new Mock<IConfiguration>();
@@ -87,13 +90,13 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                         settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
                     });
 
-            Assert.NotEmpty(serviceCollection);
+            Assert.IsNotEmpty(serviceCollection);
         }
 
         /// <summary>
         ///     The creates the extension manager.
         /// </summary>
-        [Fact]
+        [Test]
         public void Creates_The_ExtensionManager()
         {
             Log.Information("Starting {MethodName}", nameof(this.Creates_The_ExtensionManager));

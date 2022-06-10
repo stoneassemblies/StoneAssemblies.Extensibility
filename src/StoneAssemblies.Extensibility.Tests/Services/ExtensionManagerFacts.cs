@@ -19,33 +19,34 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
     using Moq;
 
+    using NUnit.Framework;
+
     using Serilog;
 
-    using Xunit;
-    using Xunit.Abstractions;
 
     /// <summary>
     ///     The extension manager tests.
     /// </summary>
-    [CollectionDefinition(nameof(ExtensionManagerFacts), DisableParallelization = true)]
+    [TestFixture]
     public class ExtensionManagerFacts
     {
-        /// <summary>
-        ///     Initializes the ExtensionManagerFacts
-        /// </summary>
-        /// <param name="output">
-        ///     The output.
-        /// </param>
-        public ExtensionManagerFacts(ITestOutputHelper output)
-        {
-            Log.Logger = new LoggerConfiguration()
-                // add the xunit test output sink to the serilog logger
-                // https://github.com/trbenning/serilog-sinks-xunit#serilog-sinks-xunit
-                .WriteTo.TestOutput(output)
-                .WriteTo.File(@"c:\tmp\x-log.txt", rollingInterval: RollingInterval.Day)
-                .CreateLogger();
-        }
+        ///// <summary>
+        /////     Initializes the ExtensionManagerFacts
+        ///// </summary>
+        ///// <param name="output">
+        /////     The output.
+        ///// </param>
+        //public ExtensionManagerFacts(ITestOutputHelper output)
+        //{
+        //    Log.Logger = new LoggerConfiguration()
+        //        // add the xunit test output sink to the serilog logger
+        //        // https://github.com/trbenning/serilog-sinks-xunit#serilog-sinks-xunit
+        //        .WriteTo.TestOutput(output)
+        //        .WriteTo.File(@"c:\tmp\x-log.txt", rollingInterval: RollingInterval.Day)
+        //        .CreateLogger();
+        //}
 
+        [TestFixture]
         public class The_LoadExtensionsAsync_Method
         {
             /// <summary>
@@ -54,7 +55,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             /// <returns>
             ///     The <see cref="Task" />.
             /// </returns>
-            [Fact]
+            [Test]
             public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection()
             {
                 Log.Information(
@@ -78,7 +79,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.LoadExtensionsAsync();
 
-                Assert.NotEmpty(serviceCollection);
+                Assert.IsNotEmpty(serviceCollection);
 
                 Log.Information(
                     "Finished {MethodName}",
@@ -91,7 +92,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             /// <returns>
             ///     The <see cref="Task" />.
             /// </returns>
-            [Fact]
+            [Test]
             public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration()
             {
                 Log.Information(
@@ -114,7 +115,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.LoadExtensionsAsync();
 
-                Assert.NotEmpty(serviceCollection);
+                Assert.IsNotEmpty(serviceCollection);
 
                 Log.Information(
                     "Finished {MethodName}",
@@ -128,12 +129,9 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             /// <returns>
             ///     The <see cref="Task" />.
             /// </returns>
-            [Fact]
+            [Test]
             public async Task Loads_Extensions_Assemblies_Available_Via_GetExtensionAssemblies_Method()
             {
-                Log.Information(
-                    "Starting {MethodName}",
-                    nameof(this.Loads_Extensions_Assemblies_Available_Via_GetExtensionAssemblies_Method));
                 var configurationMock = new Mock<IConfiguration>();
                 var serviceCollection = new ServiceCollection();
 
@@ -150,10 +148,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.LoadExtensionsAsync();
 
-                Assert.Single(extensionManager.GetExtensionAssemblies());
-                Log.Information(
-                    "Finished {MethodName}",
-                    nameof(this.Loads_Extensions_Assemblies_Available_Via_GetExtensionAssemblies_Method));
+                Assert.AreEqual(1, extensionManager.GetExtensionAssemblies().Count());
             }
 
             /// <summary>
@@ -162,7 +157,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             /// <returns>
             ///     The <see cref="Task" />.
             /// </returns>
-            [Fact]
+            [Test]
             public async Task Succeeds_Without_Exception_With_Empty_Configuration()
             {
                 var configurationMock = new Mock<IConfiguration>();
@@ -179,16 +174,14 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.LoadExtensionsAsync();
 
-                Assert.Empty(serviceCollection);
-                Log.Information(
-                    "Finished {MethodName}",
-                    nameof(this.Succeeds_Without_Exception_With_Empty_Configuration));
+                Assert.IsEmpty(serviceCollection);
             }
         }
 
+        [TestFixture]
         public class The_Configure_Method
         {
-            [Fact]
+            [Test]
             public async Task Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature()
             {
                 Log.Information("Starting {MethodName}", nameof(Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature));
@@ -220,11 +213,11 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                     list);
 
                 Assert.True(called);
-                Assert.NotEmpty(list);
+                Assert.IsNotEmpty(list);
                 Log.Information("Finished {MethodName}", nameof(Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature));
             }
 
-            [Fact]
+            [Test]
             public async Task Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments()
             {
                 Log.Information("Starting {MethodName}", nameof(this.Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
@@ -250,13 +243,13 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 extensionManager.Configure(null, new Action<string>(s => { called = true; }), null, list, null);
 
                 Assert.True(called);
-                Assert.NotEmpty(list);
+                Assert.IsNotEmpty(list);
 
                 Log.Information("Finished {MethodName}", nameof(this.Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
 
             }
 
-            [Fact]
+            [Test]
             public async Task Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature()
             {
                 Log.Information("Starting {MethodName}", nameof(this.Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature));
@@ -288,9 +281,10 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             }
         }
 
+        [TestFixture]
         public class The_GetAvailableExtensionPackagesAsync_Method
         {
-            [Fact]
+            [Test]
             public async Task Returns_The_Available_Package_With_Not_Null_Value_Installed_Version_Property_Async()
             {
                 var configurationMock = new Mock<IConfiguration>();
