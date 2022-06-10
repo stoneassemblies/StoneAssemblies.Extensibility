@@ -227,7 +227,7 @@ namespace StoneAssemblies.Extensibility
                         var id = document.XPathSelectElement("/nuget:package/nuget:metadata/nuget:id", namespaceManager)?.Value;
                         var version = document.XPathSelectElement("/nuget:package/nuget:metadata/nuget:version", namespaceManager)?.Value;
                         return (Id:id, Version:version);
-                    }).ToDictionary(tuple => tuple.Id);
+                    }).ToDictionary(valueTuple => valueTuple.Id);
 
             foreach (var repository in this.searchableRepositories)
             {
@@ -241,10 +241,17 @@ namespace StoneAssemblies.Extensibility
                     if (installedPackages.TryGetValue(packageSearchMetadata.Identity.Id, out var installedPackage))
                     {
                         installedVersion = versionInfos?.FirstOrDefault(info => info.Version.OriginalVersion == installedPackage.Version);
+                        installedPackages.Remove(packageSearchMetadata.Identity.Id);
                     }
 
-                    yield return new ExtensionPackage(packageSearchMetadata, versionInfos, installedVersion);
+                    yield return new ExtensionPackage(packageSearchMetadata.Identity.Id, versionInfos, installedVersion);
                 }
+            }
+
+            foreach (var installedPackage in installedPackages)
+            {
+                var installedPackageValue = installedPackage.Value;
+                yield return new ExtensionPackage(installedPackage.Key, null, new VersionInfo(new NuGetVersion(installedPackageValue.Version)));
             }
         }
 

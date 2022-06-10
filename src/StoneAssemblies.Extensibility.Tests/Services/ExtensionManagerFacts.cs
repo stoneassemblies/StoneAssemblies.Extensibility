@@ -290,6 +290,42 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 Assert.NotNull(extensionPackage?.InstalledVersion);
             }
+
+            [Test]
+            public async Task Returns_The_Available_Package_With_Not_Null_Value_And_Nul_In_VersionInfos_When_The_Package_Is_Not_Present_In_The_Feed_Async()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+                settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
+
+                settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
+                settings.Sources.Add(
+                    new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json", Searchable = false });
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.LoadExtensionsAsync();
+
+                var settings2 = new ExtensionManagerSettings();
+                settings2.Sources.Add(
+                    new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json", Searchable = false });
+                IExtensionManager extensionManager2 = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings2);
+
+                var extensionPackages = await extensionManager2.GetAvailableExtensionPackagesAsync(0, 10).ToListAsync();
+
+                var extensionPackage = extensionPackages.FirstOrDefault(package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
+
+                Assert.NotNull(extensionPackage?.InstalledVersion);
+                Assert.IsNull(extensionPackage?.Versions);
+            }
         }
     }
 }

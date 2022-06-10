@@ -17,27 +17,26 @@
         /// <summary>
         ///     Initializes a new instance of the <see cref="ExtensionPackage" /> class.
         /// </summary>
-        /// <param name="packageSearchMetadata">
-        ///     The package search metadata.
+        /// <param name="id">
+        ///     The package id.
         /// </param>
-        /// <param name="versionInfos">
+        /// <param name="versions">
         ///     The version infos.
         /// </param>
         /// <param name="installedVersion">
         ///     The installed version.
         /// </param>
-        public ExtensionPackage(
-            IPackageSearchMetadata packageSearchMetadata, List<VersionInfo> versionInfos, VersionInfo installedVersion)
+        public ExtensionPackage(string id, List<VersionInfo> versions, VersionInfo installedVersion)
         {
-            this.VersionInfos = versionInfos;
-            this.packageSearchMetadata = packageSearchMetadata;
+            this.Id = id;
+            this.Versions = versions;
             this.InstalledVersion = installedVersion;
         }
 
         /// <summary>
         ///     Gets the id.
         /// </summary>
-        public string Id => this.packageSearchMetadata.Identity.Id;
+        public string Id {get;}
 
         /// <summary>
         ///     Gets the installed version.
@@ -47,6 +46,6 @@
         /// <summary>
         ///     Gets or sets the version infos.
         /// </summary>
-        public List<VersionInfo> VersionInfos { get; }
+        public List<VersionInfo> Versions { get; }
     }
 }
