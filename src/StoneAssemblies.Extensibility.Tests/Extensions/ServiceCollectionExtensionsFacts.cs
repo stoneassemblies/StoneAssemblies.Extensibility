@@ -12,9 +12,6 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
 
     using NUnit.Framework;
 
-    using Serilog;
-
-
     /// <summary>
     ///     The service collection extensions facts.
     /// </summary>
@@ -99,8 +96,6 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
         [Test]
         public void Creates_The_ExtensionManager()
         {
-            Log.Information("Starting {MethodName}", nameof(this.Creates_The_ExtensionManager));
-
             var configurationMock = new Mock<IConfiguration>();
             var serviceCollection = new ServiceCollection();
 
@@ -114,8 +109,6 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                     });
 
             Assert.NotNull(extensionManager);
-
-            Log.Information("Finished {MethodName}", nameof(this.Creates_The_ExtensionManager));
         }
     }
 }

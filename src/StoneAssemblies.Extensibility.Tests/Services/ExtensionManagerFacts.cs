@@ -58,9 +58,6 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             [Test]
             public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection()
             {
-                Log.Information(
-                    "Starting {MethodName}",
-                    nameof(this.Initializes_The_Plugin_Registering_Services_In_ServiceCollection));
                 var currentDirectory = Directory.GetCurrentDirectory();
 
                 var configurationMock = new Mock<IConfiguration>();
@@ -80,10 +77,6 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 await extensionManager.LoadExtensionsAsync();
 
                 Assert.IsNotEmpty(serviceCollection);
-
-                Log.Information(
-                    "Finished {MethodName}",
-                    nameof(this.Initializes_The_Plugin_Registering_Services_In_ServiceCollection));
             }
 
             /// <summary>
@@ -95,11 +88,6 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             [Test]
             public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration()
             {
-                Log.Information(
-                    "Starting {MethodName}",
-                    nameof(this
-                        .Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration));
-
                 var dictionary = new Dictionary<string, string>
                                      {
                                          { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
@@ -116,11 +104,6 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 await extensionManager.LoadExtensionsAsync();
 
                 Assert.IsNotEmpty(serviceCollection);
-
-                Log.Information(
-                    "Finished {MethodName}",
-                    nameof(this
-                        .Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration));
             }
 
             /// <summary>
@@ -184,13 +167,12 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             [Test]
             public async Task Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature()
             {
-                Log.Information("Starting {MethodName}", nameof(Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature));
                 var dictionary = new Dictionary<string, string>
-            {
-                { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
-                { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
-                { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
-            };
+                                     {
+                                         { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
+                                         { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
+                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
+                                     };
 
                 var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
                 var serviceCollection = new ServiceCollection();
@@ -201,33 +183,33 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.LoadExtensionsAsync();
 
-                bool called = false;
+                var called = false;
                 var list = new List<string>();
 
-                extensionManager.Configure(
-                    new Action<string>(
-                        s =>
-                        {
-                            called = true;
-                        }),
-                    list);
+                extensionManager.Configure(new Action<string>(s => { called = true; }), list);
 
                 Assert.True(called);
                 Assert.IsNotEmpty(list);
-                Log.Information("Finished {MethodName}", nameof(Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature));
+                Log.Information(
+                    "Finished {MethodName}",
+                    nameof(this.Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature));
             }
 
             [Test]
-            public async Task Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments()
+            public async Task
+                Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments()
             {
-                Log.Information("Starting {MethodName}", nameof(this.Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
+                Log.Information(
+                    "Starting {MethodName}",
+                    nameof(this
+                        .Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
 
                 var dictionary = new Dictionary<string, string>
-            {
-                { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
-                { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
-                { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
-            };
+                                     {
+                                         { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
+                                         { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
+                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
+                                     };
 
                 var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
                 var serviceCollection = new ServiceCollection();
@@ -245,20 +227,24 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 Assert.True(called);
                 Assert.IsNotEmpty(list);
 
-                Log.Information("Finished {MethodName}", nameof(this.Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
-
+                Log.Information(
+                    "Finished {MethodName}",
+                    nameof(this
+                        .Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
             }
 
             [Test]
             public async Task Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature()
             {
-                Log.Information("Starting {MethodName}", nameof(this.Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature));
+                Log.Information(
+                    "Starting {MethodName}",
+                    nameof(this.Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature));
                 var dictionary = new Dictionary<string, string>
-                                 {
-                                     { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
-                                     { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
-                                     { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
-                                 };
+                                     {
+                                         { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
+                                         { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
+                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
+                                     };
 
                 var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
                 var serviceCollection = new ServiceCollection();
@@ -268,16 +254,10 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.LoadExtensionsAsync();
 
-                bool called = false;
-                extensionManager.Configure(
-                    new Action<string>(
-                        s =>
-                        {
-                            called = true;
-                        }));
+                var called = false;
+                extensionManager.Configure(new Action<string>(s => { called = true; }));
 
                 Assert.False(called);
-                Log.Information("Finished {MethodName}", nameof(this.Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature));
             }
         }
 
