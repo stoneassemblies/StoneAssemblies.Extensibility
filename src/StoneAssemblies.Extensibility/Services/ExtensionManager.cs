@@ -16,6 +16,9 @@ namespace StoneAssemblies.Extensibility
     using System.Runtime.Loader;
     using System.Threading;
     using System.Threading.Tasks;
+    using System.Xml;
+    using System.Xml.Linq;
+    using System.Xml.XPath;
 
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
@@ -76,6 +79,10 @@ namespace StoneAssemblies.Extensibility
         /// </summary>
         private readonly List<SourceRepository> sourceRepositories = new List<SourceRepository>();
 
+        /// <summary>
+        ///     The searchable repositories.
+        /// </summary>
+        private readonly List<SourceRepository> searchableRepositories = new List<SourceRepository>();
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="ExtensionManager" /> class.
@@ -92,6 +99,7 @@ namespace StoneAssemblies.Extensibility
         {
             AssemblyLoadContext.Default.ResolvingUnmanagedDll += this.OnAssemblyLoadContextResolvingUnmanagedDll;
             AppDomain.CurrentDomain.AssemblyResolve += this.OnCurrentAppDomainAssemblyResolve;
+            
             var extensionSources = new List<ExtensionSource>();
             if (this.settings.Sources != null)
             {
@@ -124,6 +132,10 @@ namespace StoneAssemblies.Extensibility
                     }
 
                     this.sourceRepositories.Add(sourceRepository);
+                    if (extensionSource.Searchable)
+                    {
+                        this.searchableRepositories.Add(sourceRepository);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -199,6 +211,39 @@ namespace StoneAssemblies.Extensibility
                     {
                         Log.Error(ex, "Error configuring extension");
                     }
+                }
+            }
+        }
+
+        public async IAsyncEnumerable<ExtensionPackage> GetAvailableExtensionPackagesAsync(int skip, int take)
+        {
+            var pluginsDirectoryPath = Path.GetFullPath(this.settings.PluginsDirectory);
+            var namespaceManager = new XmlNamespaceManager(new NameTable());
+            namespaceManager.AddNamespace("nuget", "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd");
+            var installedPackages = Directory.EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories).Select(
+                filePath =>
+                    {
+                        var document = XDocument.Load(filePath);
+                        var id = document.XPathSelectElement("/nuget:package/nuget:metadata/nuget:id", namespaceManager)?.Value;
+                        var version = document.XPathSelectElement("/nuget:package/nuget:metadata/nuget:version", namespaceManager)?.Value;
+                        return (Id:id, Version:version);
+                    }).ToDictionary(tuple => tuple.Id);
+
+            foreach (var repository in this.searchableRepositories)
+            {
+                var packageSearchResource = await repository.GetResourceAsync<PackageSearchResource>();
+                var searchFilter = new SearchFilter(true);
+                var searchResults = await packageSearchResource.SearchAsync("", searchFilter, skip, take, NullLogger.Instance, CancellationToken.None);
+                foreach (var packageSearchMetadata in searchResults)
+                {
+                    var versionInfos = (await packageSearchMetadata.GetVersionsAsync()).ToList();
+                    VersionInfo installedVersion = null;
+                    if (installedPackages.TryGetValue(packageSearchMetadata.Identity.Id, out var installedPackage))
+                    {
+                        installedVersion = versionInfos?.FirstOrDefault(info => info.Version.OriginalVersion == installedPackage.Version);
+                    }
+
+                    yield return new ExtensionPackage(packageSearchMetadata, versionInfos, installedVersion);
                 }
             }
         }

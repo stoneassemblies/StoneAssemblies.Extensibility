@@ -35,5 +35,8 @@ namespace StoneAssemblies.Extensibility
         /// The parameters.
         /// </param>
         void Configure(params object[] parameters);
+
+
+        IAsyncEnumerable<ExtensionPackage> GetAvailableExtensionPackagesAsync(int skip, int take);
     }
 }

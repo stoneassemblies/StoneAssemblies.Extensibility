@@ -9,7 +9,10 @@ namespace StoneAssemblies.Extensibility.Tests.Services
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Threading.Tasks;
+
+    using Dasync.Collections;
 
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
@@ -43,300 +46,276 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 .CreateLogger();
         }
 
-        /// <summary>
-        ///     The creates the extension manager.
-        /// </summary>
-        [Fact]
-        public void Creates_The_ExtensionManager()
+        public class The_LoadExtensionsAsync_Method
         {
-            Log.Information("Starting {MethodName}", nameof(Creates_The_ExtensionManager));
+            /// <summary>
+            ///     Initializes the plugin registering services in service collection.
+            /// </summary>
+            /// <returns>
+            ///     The <see cref="Task" />.
+            /// </returns>
+            [Fact]
+            public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection()
+            {
+                Log.Information(
+                    "Starting {MethodName}",
+                    nameof(this.Initializes_The_Plugin_Registering_Services_In_ServiceCollection));
+                var currentDirectory = Directory.GetCurrentDirectory();
 
-            var configurationMock = new Mock<IConfiguration>();
-            var serviceCollection = new ServiceCollection();
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
 
-            var extensionManager = serviceCollection.AddExtensions(
-                configurationMock.Object, settings =>
-                {
-                    settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
-                    settings.Sources.Add(new ExtensionSource
-                    {
-                        Uri = "../../../../../output/nuget-local/"
-                    });
-                    settings.Sources.Add(new ExtensionSource
-                    {
-                        Uri = "https://api.nuget.org/v3/index.json"
-                    });
-                });
+                var settings = new ExtensionManagerSettings();
+                settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
 
-            Assert.NotNull(extensionManager);
+                settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
+                settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
 
-            Log.Information("Finished {MethodName}", nameof(Creates_The_ExtensionManager));
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.LoadExtensionsAsync();
+
+                Assert.NotEmpty(serviceCollection);
+
+                Log.Information(
+                    "Finished {MethodName}",
+                    nameof(this.Initializes_The_Plugin_Registering_Services_In_ServiceCollection));
+            }
+
+            /// <summary>
+            ///     Initializes the plugin registering services in service collection from the configuration.
+            /// </summary>
+            /// <returns>
+            ///     The <see cref="Task" />.
+            /// </returns>
+            [Fact]
+            public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration()
+            {
+                Log.Information(
+                    "Starting {MethodName}",
+                    nameof(this
+                        .Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration));
+
+                var dictionary = new Dictionary<string, string>
+                                     {
+                                         { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
+                                         { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
+                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
+                                     };
+
+                var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
+                var serviceCollection = new ServiceCollection();
+                var settings = new ExtensionManagerSettings();
+                configuration.GetSection("Extensions")?.Bind(settings);
+                IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
+
+                await extensionManager.LoadExtensionsAsync();
+
+                Assert.NotEmpty(serviceCollection);
+
+                Log.Information(
+                    "Finished {MethodName}",
+                    nameof(this
+                        .Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration));
+            }
+
+            /// <summary>
+            ///     Loads extensions assemblies available via get extension assemblies method.
+            /// </summary>
+            /// <returns>
+            ///     The <see cref="Task" />.
+            /// </returns>
+            [Fact]
+            public async Task Loads_Extensions_Assemblies_Available_Via_GetExtensionAssemblies_Method()
+            {
+                Log.Information(
+                    "Starting {MethodName}",
+                    nameof(this.Loads_Extensions_Assemblies_Available_Via_GetExtensionAssemblies_Method));
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+                settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
+
+                settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
+                settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.LoadExtensionsAsync();
+
+                Assert.Single(extensionManager.GetExtensionAssemblies());
+                Log.Information(
+                    "Finished {MethodName}",
+                    nameof(this.Loads_Extensions_Assemblies_Available_Via_GetExtensionAssemblies_Method));
+            }
+
+            /// <summary>
+            ///     Succeeds even if extension list is null.
+            /// </summary>
+            /// <returns>
+            ///     The <see cref="Task" />.
+            /// </returns>
+            [Fact]
+            public async Task Succeeds_Without_Exception_With_Empty_Configuration()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+                settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
+                settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.LoadExtensionsAsync();
+
+                Assert.Empty(serviceCollection);
+                Log.Information(
+                    "Finished {MethodName}",
+                    nameof(this.Succeeds_Without_Exception_With_Empty_Configuration));
+            }
         }
 
-        /// <summary>
-        ///     Initializes the plugin registering services in service collection.
-        /// </summary>
-        /// <returns>
-        ///     The <see cref="Task" />.
-        /// </returns>
-        [Fact]
-        public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection()
+        public class The_Configure_Method
         {
-            Log.Information("Starting {MethodName}", nameof(Initializes_The_Plugin_Registering_Services_In_ServiceCollection));
-            var currentDirectory = Directory.GetCurrentDirectory();
-
-            var configurationMock = new Mock<IConfiguration>();
-            var serviceCollection = new ServiceCollection();
-
-            var settings = new ExtensionManagerSettings();
-            settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
-
-            settings.Sources.Add(new ExtensionSource
+            [Fact]
+            public async Task Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature()
             {
-                Uri = "../../../../../output/nuget-local/"
-            });
-            settings.Sources.Add(new ExtensionSource
-            {
-                Uri = "https://api.nuget.org/v3/index.json"
-            });
-
-            IExtensionManager extensionManager = new ExtensionManager(
-                serviceCollection,
-                configurationMock.Object, settings);
-
-            await extensionManager.LoadExtensionsAsync();
-
-            Assert.NotEmpty(serviceCollection);
-
-            Log.Information("Finished {MethodName}", nameof(Initializes_The_Plugin_Registering_Services_In_ServiceCollection));
-        }
-
-        /// <summary>
-        ///     Initializes the plugin registering services in service collection from the configuration.
-        /// </summary>
-        /// <returns>
-        ///     The <see cref="Task" />.
-        /// </returns>
-        [Fact]
-        public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration()
-        {
-            Log.Information("Starting {MethodName}", nameof(Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration));
-
-            var dictionary = new Dictionary<string, string>
-                                 {
-                                     { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
-                                     { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
-                                     { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
-                                 };
-
-            var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
-            var serviceCollection = new ServiceCollection();
-            var settings = new ExtensionManagerSettings();
-            configuration.GetSection("Extensions")?.Bind(settings);
-            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
-
-            await extensionManager.LoadExtensionsAsync();
-
-            Assert.NotEmpty(serviceCollection);
-
-            Log.Information("Finished {MethodName}", nameof(Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_The_Configuration));
-        }
-
-        /// <summary>
-        ///     Loads extensions assemblies available via get extension assemblies method.
-        /// </summary>
-        /// <returns>
-        ///     The <see cref="Task" />.
-        /// </returns>
-        [Fact]
-        public async Task Loads_Extensions_Assemblies_Available_Via_GetExtensionAssemblies_Method()
-        {
-            Log.Information("Starting {MethodName}", nameof(Loads_Extensions_Assemblies_Available_Via_GetExtensionAssemblies_Method));
-            var configurationMock = new Mock<IConfiguration>();
-            var serviceCollection = new ServiceCollection();
-
-            var settings = new ExtensionManagerSettings();
-            settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
-
-            settings.Sources.Add(new ExtensionSource
-            {
-                Uri = "../../../../../output/nuget-local/"
-            });
-            settings.Sources.Add(new ExtensionSource
-            {
-                Uri = "https://api.nuget.org/v3/index.json"
-            });
-
-            IExtensionManager extensionManager = new ExtensionManager(
-                serviceCollection,
-                configurationMock.Object,
-                settings);
-
-            await extensionManager.LoadExtensionsAsync();
-
-            Assert.Single(extensionManager.GetExtensionAssemblies());
-            Log.Information("Finished {MethodName}", nameof(Loads_Extensions_Assemblies_Available_Via_GetExtensionAssemblies_Method));
-        }
-
-        /// <summary>
-        ///     Registers services in service collection.
-        /// </summary>
-        [Fact]
-        public void Registers_Services_In_ServiceCollection()
-        {
-            Log.Information("Starting {MethodName}", nameof(Registers_Services_In_ServiceCollection));
-            var configurationMock = new Mock<IConfiguration>();
-            var serviceCollection = new ServiceCollection();
-
-            serviceCollection.AddExtensions(
-                configurationMock.Object,
-                settings =>
-                {
-                    settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
-                    settings.Sources.Add(new ExtensionSource
-                    {
-                        Uri = "../../../../../output/nuget-local/"
-                    });
-                    settings.Sources.Add(new ExtensionSource
-                    {
-                        Uri = "https://api.nuget.org/v3/index.json"
-                    });
-                });
-
-            Assert.NotEmpty(serviceCollection);
-            Log.Information("Finished {MethodName}", nameof(Registers_Services_In_ServiceCollection));
-        }
-
-        /// <summary>
-        ///     Succeeds even if extension list is null.
-        /// </summary>
-        /// <returns>
-        ///     The <see cref="Task" />.
-        /// </returns>
-        [Fact]
-        public async Task Succeeds_Without_Exception_With_Empty_Configuration()
-        {
-            Log.Information("Starting {MethodName}", nameof(this.Succeeds_Without_Exception_With_Empty_Configuration));
-            var configurationMock = new Mock<IConfiguration>();
-            var serviceCollection = new ServiceCollection();
-
-            var settings = new ExtensionManagerSettings();
-            settings.Sources.Add(new ExtensionSource
-            {
-                Uri = "../../../../../output/nuget-local/",
-            });
-            settings.Sources.Add(new ExtensionSource
-            {
-                Uri = "https://api.nuget.org/v3/index.json",
-            });
-
-            IExtensionManager extensionManager = new ExtensionManager(
-                serviceCollection,
-                configurationMock.Object, settings);
-
-            await extensionManager.LoadExtensionsAsync();
-
-            Assert.Empty(serviceCollection);
-            Log.Information("Finished {MethodName}", nameof(this.Succeeds_Without_Exception_With_Empty_Configuration));
-        }
-
-        [Fact]
-        public async Task The_Configure_Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature()
-        {
-            Log.Information("Starting {MethodName}", nameof(The_Configure_Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature));
-            var dictionary = new Dictionary<string, string>
+                Log.Information("Starting {MethodName}", nameof(Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature));
+                var dictionary = new Dictionary<string, string>
             {
                 { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
                 { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
                 { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
             };
 
-            var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
-            var serviceCollection = new ServiceCollection();
+                var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
+                var serviceCollection = new ServiceCollection();
 
-            var settings = new ExtensionManagerSettings();
-            configuration.GetSection("Extensions").Bind(settings);
-            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
+                var settings = new ExtensionManagerSettings();
+                configuration.GetSection("Extensions").Bind(settings);
+                IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
 
-            await extensionManager.LoadExtensionsAsync();
+                await extensionManager.LoadExtensionsAsync();
 
-            bool called = false;
-            var list = new List<string>();
+                bool called = false;
+                var list = new List<string>();
 
-            extensionManager.Configure(
-                new Action<string>(
-                    s =>
+                extensionManager.Configure(
+                    new Action<string>(
+                        s =>
                         {
                             called = true;
                         }),
-                list);
+                    list);
 
-            Assert.True(called);
-            Assert.NotEmpty(list);
-            Log.Information("Finished {MethodName}", nameof(The_Configure_Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature));
-        }
+                Assert.True(called);
+                Assert.NotEmpty(list);
+                Log.Information("Finished {MethodName}", nameof(Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature));
+            }
 
-        [Fact]
-        public async Task The_Configure_Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments()
-        {
-            Log.Information("Starting {MethodName}", nameof(The_Configure_Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
+            [Fact]
+            public async Task Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments()
+            {
+                Log.Information("Starting {MethodName}", nameof(this.Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
 
-            var dictionary = new Dictionary<string, string>
+                var dictionary = new Dictionary<string, string>
             {
                 { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
                 { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
                 { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
             };
 
-            var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
-            var serviceCollection = new ServiceCollection();
-            var settings = new ExtensionManagerSettings();
-            configuration.GetSection("Extensions").Bind(settings);
-            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
+                var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
+                var serviceCollection = new ServiceCollection();
+                var settings = new ExtensionManagerSettings();
+                configuration.GetSection("Extensions").Bind(settings);
+                IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
 
-            await extensionManager.LoadExtensionsAsync();
+                await extensionManager.LoadExtensionsAsync();
 
-            var called = false;
-            var list = new List<string>();
+                var called = false;
+                var list = new List<string>();
 
-            extensionManager.Configure(null, new Action<string>(s => { called = true; }), null, list, null);
+                extensionManager.Configure(null, new Action<string>(s => { called = true; }), null, list, null);
 
-            Assert.True(called);
-            Assert.NotEmpty(list);
+                Assert.True(called);
+                Assert.NotEmpty(list);
 
-            Log.Information("Finished {MethodName}", nameof(The_Configure_Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
+                Log.Information("Finished {MethodName}", nameof(this.Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
 
-        }
+            }
 
-        [Fact]
-        public async Task The_Configure_Method_Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature()
-        {
-            Log.Information("Starting {MethodName}", nameof(The_Configure_Method_Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature));
-            var dictionary = new Dictionary<string, string>
+            [Fact]
+            public async Task Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature()
+            {
+                Log.Information("Starting {MethodName}", nameof(this.Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature));
+                var dictionary = new Dictionary<string, string>
                                  {
                                      { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
                                      { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
                                      { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
                                  };
 
-            var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
-            var serviceCollection = new ServiceCollection();
-            var settings = new ExtensionManagerSettings();
-            configuration.GetSection("Extensions").Bind(settings);
-            IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
+                var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
+                var serviceCollection = new ServiceCollection();
+                var settings = new ExtensionManagerSettings();
+                configuration.GetSection("Extensions").Bind(settings);
+                IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
 
-            await extensionManager.LoadExtensionsAsync();
+                await extensionManager.LoadExtensionsAsync();
 
-            bool called = false;
-            extensionManager.Configure(
-                new Action<string>(
-                    s =>
+                bool called = false;
+                extensionManager.Configure(
+                    new Action<string>(
+                        s =>
                         {
                             called = true;
                         }));
 
-            Assert.False(called);
-            Log.Information("Finished {MethodName}", nameof(The_Configure_Method_Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature));
+                Assert.False(called);
+                Log.Information("Finished {MethodName}", nameof(this.Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature));
+            }
+        }
+
+        public class The_GetAvailableExtensionPackagesAsync_Method
+        {
+            [Fact]
+            public async Task Returns_The_Available_Package_With_Not_Null_Value_Installed_Version_Property_Async()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+                settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
+
+                settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
+                settings.Sources.Add(
+                    new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json", Searchable = false });
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.LoadExtensionsAsync();
+
+                var extensionPackages = await extensionManager.GetAvailableExtensionPackagesAsync(0, 10).ToListAsync();
+
+                var extensionPackage = extensionPackages.FirstOrDefault(package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
+
+                Assert.NotNull(extensionPackage?.InstalledVersion);
+            }
         }
     }
 }

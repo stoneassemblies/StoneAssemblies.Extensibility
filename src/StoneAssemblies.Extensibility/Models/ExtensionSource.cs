@@ -20,5 +20,10 @@
         /// Gets or sets the username.
         /// </summary>
         public string Username { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether is searchable.
+        /// </summary>
+        public bool Searchable { get; set; } = true;
     }
 }
