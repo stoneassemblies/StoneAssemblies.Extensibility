@@ -44,15 +44,30 @@
         /// Determines whether the package scheduled to install.
         /// </summary>
         /// <param name="packageId">
-        /// The package id.
+        ///     The package id.
+        /// </param>
+        /// <param name="version">
+        ///     The package version.
         /// </param>
         /// <returns>
         /// The <see cref="bool"/>.
         /// </returns>
-        public bool IsPackageScheduledToInstall(string packageId)
+        public bool IsPackageScheduledToInstall(string packageId, out string version)
         {
+            version = string.Empty;
             var idx = this.Install.FindIndex(InstallMatch(packageId));
-            return idx >= 0;
+            if (idx >= 0)
+            {
+                 var packageIdParts = this.Install[idx].Split(":");
+                 if (packageIdParts.Length == 2)
+                 {
+                     version = packageIdParts[1];
+                 }
+
+                 return true;
+            }
+
+            return false;
         }
 
         /// <summary>

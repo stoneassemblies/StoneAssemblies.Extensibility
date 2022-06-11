@@ -105,7 +105,7 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         /// The <see cref="Task"/>.
         /// </returns>
-        Task<bool> IsPackageScheduledToInstallAsync(string packageId);
+        Task<(bool Scheduled, string Version)> IsPackageScheduledToInstallAsync(string packageId);
 
         /// <summary>
         /// Determines whether the package is scheduled to uninstall.

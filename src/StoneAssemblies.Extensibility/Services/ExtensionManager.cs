@@ -170,13 +170,18 @@ namespace StoneAssemblies.Extensibility
         }
 
         /// <inheritdoc />
-        async Task<bool> IExtensionManager.IsPackageScheduledToInstallAsync(string packageId)
+        async Task<(bool Scheduled, string Version)> IExtensionManager.IsPackageScheduledToInstallAsync(string packageId)
         {
             await semaphore.WaitAsync();
             try
             {
                 var schedule = await this.GetScheduleAsync();
-                return schedule.IsPackageScheduledToInstall(packageId);
+                if (schedule.IsPackageScheduledToInstall(packageId, out var version))
+                {
+                    return (true, version);
+                }
+
+                return (false, string.Empty);
             }
             finally
             {

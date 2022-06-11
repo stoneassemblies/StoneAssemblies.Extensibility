@@ -14,10 +14,13 @@
         /// <param name="packageId">
         /// The package id.
         /// </param>
+        /// <param name="version">
+        /// The package version.
+        /// </param>
         /// <returns>
         /// The <see cref="bool"/>.
         /// </returns>
-        bool IsPackageScheduledToInstall(string packageId);
+        bool IsPackageScheduledToInstall(string packageId, out string version);
 
         /// <summary>
         /// Determines whether the package scheduled to uninstall.
