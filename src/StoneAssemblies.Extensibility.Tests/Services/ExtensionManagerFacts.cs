@@ -373,6 +373,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                     "1.0.0-alpha0104");
 
                 var schedule = await extensionManager.GetScheduleAsync();
+
                 Assert.Contains("StoneAssemblies.Extensibility.DemoPlugin:1.0.0-alpha0104", schedule.Install.ToList());
             }
 
@@ -400,8 +401,62 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                     "1.0.0-alpha0105");
 
                 var schedule = await extensionManager.GetScheduleAsync();
-                Assert.AreEqual(1, schedule.Install.Count(s => s.StartsWith("StoneAssemblies.Extensibility.DemoPlugin")));
+
+                Assert.AreEqual(1,schedule.Install.Count(s => s.StartsWith("StoneAssemblies.Extensibility.DemoPlugin")));
             }
+        }
+
+        [TestFixture]
+        public class The_IsPackageScheduledToInstallAsync_Method
+        {
+            [Test]
+            public async Task Returns_True_When_ScheduleInstallPackageAsync_Is_Called()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.RemoveScheduleAsync();
+
+                await extensionManager.ScheduleInstallPackageAsync(
+                    "StoneAssemblies.Extensibility.DemoPlugin",
+                    "1.0.0-alpha0104");
+
+                Assert.IsTrue(await extensionManager.IsPackageScheduledToInstallAsync("StoneAssemblies.Extensibility.DemoPlugin"));
+            }
+
+        }
+
+
+        [TestFixture]
+        public class The_IsPackageScheduledToUnInstallAsync_Method
+        {
+            [Test]
+            public async Task Returns_True_When_ScheduleUnInstallPackageAsync_Is_Called()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.RemoveScheduleAsync();
+
+                await extensionManager.ScheduleUnInstallPackageAsync("StoneAssemblies.Extensibility.DemoPlugin");
+
+                Assert.IsTrue(await extensionManager.IsPackageScheduledToUnInstallAsync("StoneAssemblies.Extensibility.DemoPlugin"));
+            }
+
         }
 
         [TestFixture]
@@ -424,8 +479,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.ScheduleUnInstallPackageAsync("StoneAssemblies.Extensibility.DemoPlugin");
 
-                var schedule = await extensionManager.GetScheduleAsync();
-                Assert.Contains("StoneAssemblies.Extensibility.DemoPlugin", schedule.UnInstall.ToList());
+                Assert.IsTrue(await extensionManager.IsPackageScheduledToUnInstallAsync("StoneAssemblies.Extensibility.DemoPlugin"));
             }
         }
     }

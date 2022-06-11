@@ -170,6 +170,36 @@ namespace StoneAssemblies.Extensibility
         }
 
         /// <inheritdoc />
+        async Task<bool> IExtensionManager.IsPackageScheduledToInstallAsync(string packageId)
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                var schedule = await this.GetScheduleAsync();
+                return schedule.IsPackageScheduledToInstall(packageId);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }
+
+        /// <inheritdoc />
+        async Task<bool> IExtensionManager.IsPackageScheduledToUnInstallAsync(string packageId)
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                var schedule = await this.GetScheduleAsync();
+                return schedule.IsPackageScheduledToUnInstall(packageId);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }
+
+        /// <inheritdoc />
         async Task IExtensionManager.ScheduleInstallPackageAsync(string packageId, string version)
         {
             await semaphore.WaitAsync();
@@ -177,19 +207,7 @@ namespace StoneAssemblies.Extensibility
             {
                 var schedule = await this.GetScheduleAsync();
 
-                var idx = schedule.UnInstall.FindIndex(s => s.StartsWith($"{packageId}"));
-                if (idx > -1)
-                {
-                    schedule.UnInstall.RemoveAt(idx);
-                }
-
-                idx = schedule.Install.FindIndex(s => s.StartsWith($"{packageId}"));
-                if (idx > -1)
-                {
-                    schedule.Install.RemoveAt(idx);
-                }
-
-                schedule.Install.Add(!string.IsNullOrEmpty(version) ? $"{packageId}:{version}" : packageId);
+                schedule.ScheduleInstallPackage(packageId, version);
 
                 await File.WriteAllTextAsync(this.ScheduleFileName, JsonConvert.SerializeObject(schedule, Formatting.Indented));
             }
@@ -206,18 +224,7 @@ namespace StoneAssemblies.Extensibility
             try
             {
                 var schedule = await this.GetScheduleAsync();
-                var idx = schedule.Install.FindIndex(s => s.StartsWith($"{packageId}"));
-                if (idx > -1)
-                {
-                    schedule.Install.RemoveAt(idx);
-                }
-
-                idx = schedule.UnInstall.FindIndex(s => s.StartsWith($"{packageId}"));
-                if (idx == -1)
-                {
-                    schedule.UnInstall.Add(packageId);
-                }
-
+                schedule.ScheduleUnInstallPackage(packageId);
                 await File.WriteAllTextAsync(this.ScheduleFileName, JsonConvert.SerializeObject(schedule, Formatting.Indented));
             }
             finally
