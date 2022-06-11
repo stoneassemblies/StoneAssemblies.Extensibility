@@ -10,11 +10,6 @@
     public class ExtensionPackage
     {
         /// <summary>
-        ///     Gets the package search metadata.
-        /// </summary>
-        private readonly IPackageSearchMetadata packageSearchMetadata;
-
-        /// <summary>
         ///     Initializes a new instance of the <see cref="ExtensionPackage" /> class.
         /// </summary>
         /// <param name="id">
@@ -36,7 +31,7 @@
         /// <summary>
         ///     Gets the id.
         /// </summary>
-        public string Id {get;}
+        public string Id { get; }
 
         /// <summary>
         ///     Gets the installed version.
@@ -44,7 +39,7 @@
         public VersionInfo InstalledVersion { get; }
 
         /// <summary>
-        ///     Gets or sets the version infos.
+        ///     Gets the version infos.
         /// </summary>
         public List<VersionInfo> Versions { get; }
     }

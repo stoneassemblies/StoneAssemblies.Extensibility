@@ -150,6 +150,34 @@ namespace StoneAssemblies.Extensibility
             }
         }
 
+        async Task<ExtensionPackage> IExtensionManager.GetExtensionPackageByIdAsync(string id)
+        {
+            var installedPackages = this.GetInstalledPackages();
+
+            VersionInfo installedVersion = null;
+            if (installedPackages.TryGetValue(id, out var value))
+            {
+                installedVersion = new VersionInfo(new NuGetVersion(value.Version));
+            }
+
+            foreach (var repository in this.searchableRepositories)
+            {
+                var packageSearchResource = await repository.GetResourceAsync<FindPackageByIdResource>();
+                var searchResults = await packageSearchResource.GetAllVersionsAsync(
+                                        id,
+                                        NullSourceCacheContext.Instance,
+                                        NullLogger.Instance,
+                                        CancellationToken.None);
+                var versionInfos = searchResults.Select(version => new VersionInfo(version)).ToList();
+                if (versionInfos.Count > 0)
+                {
+                    return new ExtensionPackage(id, versionInfos, installedVersion);
+                }
+            }
+
+            return new ExtensionPackage(id, null, installedVersion);
+        }
+    
         /// <inheritdoc />
         IEnumerable<Assembly> IExtensionManager.GetExtensionAssemblies()
         {
@@ -211,9 +239,7 @@ namespace StoneAssemblies.Extensibility
             try
             {
                 var schedule = await this.GetScheduleAsync();
-
                 schedule.ScheduleInstallPackage(packageId, version);
-
                 await File.WriteAllTextAsync(this.ScheduleFileName, JsonConvert.SerializeObject(schedule, Formatting.Indented));
             }
             finally

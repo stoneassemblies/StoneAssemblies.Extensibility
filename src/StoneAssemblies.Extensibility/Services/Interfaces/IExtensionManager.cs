@@ -51,6 +51,17 @@ namespace StoneAssemblies.Extensibility
         IAsyncEnumerable<ExtensionPackage> GetAvailableExtensionPackagesAsync(int skip, int take);
 
         /// <summary>
+        /// Gets extension package by id async.
+        /// </summary>
+        /// <param name="id">
+        /// The id.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Task"/>.
+        /// </returns>
+        Task<ExtensionPackage> GetExtensionPackageByIdAsync(string id);
+
+        /// <summary>
         ///     Gets the extension assemblies.
         /// </summary>
         /// <returns>
