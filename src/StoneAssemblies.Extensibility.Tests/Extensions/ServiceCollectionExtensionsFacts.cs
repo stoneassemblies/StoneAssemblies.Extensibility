@@ -40,6 +40,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                             settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
                             settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                             settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                            settings.IgnoreSchedule = true;
                         });
 
                 Assert.AreEqual(2, serviceCollection.Count);
@@ -61,8 +62,8 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                             settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
                             settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                             settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
-
                             settings.Initialize = false;
+                            settings.IgnoreSchedule = true;
                         });
 
                 Assert.AreEqual(1, serviceCollection.Count);
@@ -85,6 +86,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                         settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
                         settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                         settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                        settings.IgnoreSchedule = true;
                     });
 
             Assert.IsNotEmpty(serviceCollection);
@@ -106,6 +108,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                         settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
                         settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                         settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                        settings.IgnoreSchedule = true;
                     });
 
             Assert.NotNull(extensionManager);

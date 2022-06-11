@@ -5,7 +5,7 @@
     /// <summary>
     ///     The ExtensionManagerSettings
     /// </summary>
-    public class ExtensionManagerSettings
+    public class ExtensionManagerSettings : IExtensionManagerSettings
     {
         /// <summary>
         ///     Gets or set the plugins directory.
@@ -36,5 +36,10 @@
         ///     Gets or set a value to indicates whether the extension manager will initialize the plugins.
         /// </summary>
         public bool Initialize { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether skip schedule.
+        /// </summary>
+        public bool IgnoreSchedule { get; set; } = false;
     }
 }

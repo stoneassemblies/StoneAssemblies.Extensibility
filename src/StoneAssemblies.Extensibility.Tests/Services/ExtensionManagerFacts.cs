@@ -68,6 +68,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                 settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                settings.IgnoreSchedule = true;
 
                 IExtensionManager extensionManager = new ExtensionManager(
                     serviceCollection,
@@ -78,6 +79,34 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 Assert.IsNotEmpty(serviceCollection);
             }
+
+            [Test]
+            public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection_Loading_Plugins_From_The_Schedule()
+            {
+                var currentDirectory = Directory.GetCurrentDirectory();
+
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+
+                settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
+                settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.RemoveScheduleAsync();
+
+                await extensionManager.ScheduleInstallPackageAsync("StoneAssemblies.Extensibility.DemoPlugin", string.Empty);
+
+                await extensionManager.LoadExtensionsAsync();
+
+                Assert.IsNotEmpty(serviceCollection);
+            }
+
 
             /// <summary>
             ///     Initializes the plugin registering services in service collection from the configuration.
@@ -92,7 +121,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                                      {
                                          { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
                                          { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
-                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
+                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
+                                         { "Extensions:IgnoreSchedule", "true" }
                                      };
 
                 var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
@@ -123,6 +153,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                 settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                settings.IgnoreSchedule = true;
 
                 IExtensionManager extensionManager = new ExtensionManager(
                     serviceCollection,
@@ -149,6 +180,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var settings = new ExtensionManagerSettings();
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                 settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                settings.IgnoreSchedule = true;
 
                 IExtensionManager extensionManager = new ExtensionManager(
                     serviceCollection,
@@ -171,7 +203,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                                      {
                                          { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
                                          { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
-                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
+                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
+                                         { "Extensions:IgnoreSchedule", "true" }
                                      };
 
                 var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
@@ -190,25 +223,17 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 Assert.True(called);
                 Assert.IsNotEmpty(list);
-                Log.Information(
-                    "Finished {MethodName}",
-                    nameof(this.Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature));
             }
 
             [Test]
-            public async Task
-                Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments()
+            public async Task Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments()
             {
-                Log.Information(
-                    "Starting {MethodName}",
-                    nameof(this
-                        .Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
-
                 var dictionary = new Dictionary<string, string>
                                      {
                                          { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
                                          { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
-                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
+                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
+                                         { "Extensions:IgnoreSchedule", "true" }
                                      };
 
                 var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
@@ -226,24 +251,17 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 Assert.True(called);
                 Assert.IsNotEmpty(list);
-
-                Log.Information(
-                    "Finished {MethodName}",
-                    nameof(this
-                        .Method_Calls_Configure_Methods_On_Starup_Objects_If_Match_With_The_Signature_Ignoring_Null_Arguments));
             }
 
             [Test]
             public async Task Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature()
             {
-                Log.Information(
-                    "Starting {MethodName}",
-                    nameof(this.Doesnt_Call_Configure_Methods_On_Starup_Objects_If_Doesnt_Match_With_The_Signature));
                 var dictionary = new Dictionary<string, string>
                                      {
                                          { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
                                          { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
-                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" }
+                                         { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
+                                         { "Extensions:IgnoreSchedule", "true" }
                                      };
 
                 var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
@@ -271,6 +289,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var serviceCollection = new ServiceCollection();
 
                 var settings = new ExtensionManagerSettings();
+                settings.IgnoreSchedule = true;
                 settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
 
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
@@ -286,7 +305,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 var extensionPackages = await extensionManager.GetAvailableExtensionPackagesAsync(0, 10).ToListAsync();
 
-                var extensionPackage = extensionPackages.FirstOrDefault(package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
+                var extensionPackage = extensionPackages.FirstOrDefault(
+                    package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
 
                 Assert.NotNull(extensionPackage?.InstalledVersion);
             }
@@ -303,6 +323,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                 settings.Sources.Add(
                     new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json", Searchable = false });
+                settings.IgnoreSchedule = true;
 
                 IExtensionManager extensionManager = new ExtensionManager(
                     serviceCollection,
@@ -321,10 +342,90 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 var extensionPackages = await extensionManager2.GetAvailableExtensionPackagesAsync(0, 10).ToListAsync();
 
-                var extensionPackage = extensionPackages.FirstOrDefault(package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
+                var extensionPackage = extensionPackages.FirstOrDefault(
+                    package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
 
                 Assert.NotNull(extensionPackage?.InstalledVersion);
                 Assert.IsNull(extensionPackage?.Versions);
+            }
+        }
+
+        [TestFixture]
+        public class The_ScheduleInstallPackageAsync_Method
+        {
+            [Test]
+            public async Task Adds_The_Package_To_Be_Installed()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.RemoveScheduleAsync();
+
+                await extensionManager.ScheduleInstallPackageAsync(
+                    "StoneAssemblies.Extensibility.DemoPlugin",
+                    "1.0.0-alpha0104");
+
+                var schedule = await extensionManager.GetScheduleAsync();
+                Assert.Contains("StoneAssemblies.Extensibility.DemoPlugin:1.0.0-alpha0104", schedule.Install.ToList());
+            }
+
+            [Test]
+            public async Task Adds_The_Package_To_Be_Installed_Only_Once()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.RemoveScheduleAsync();
+
+                await extensionManager.ScheduleInstallPackageAsync(
+                    "StoneAssemblies.Extensibility.DemoPlugin",
+                    "1.0.0-alpha0104");
+
+                await extensionManager.ScheduleInstallPackageAsync(
+                    "StoneAssemblies.Extensibility.DemoPlugin",
+                    "1.0.0-alpha0105");
+
+                var schedule = await extensionManager.GetScheduleAsync();
+                Assert.AreEqual(1, schedule.Install.Count(s => s.StartsWith("StoneAssemblies.Extensibility.DemoPlugin")));
+            }
+        }
+
+        [TestFixture]
+        public class The_UnScheduleInstallPackageAsync_Method
+        {
+            [Test]
+            public async Task Adds_The_Package_To_Be_UnInstalled()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.RemoveScheduleAsync();
+
+                await extensionManager.ScheduleUnInstallPackageAsync("StoneAssemblies.Extensibility.DemoPlugin");
+
+                var schedule = await extensionManager.GetScheduleAsync();
+                Assert.Contains("StoneAssemblies.Extensibility.DemoPlugin", schedule.UnInstall.ToList());
             }
         }
     }

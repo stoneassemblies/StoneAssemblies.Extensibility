@@ -23,6 +23,8 @@ namespace StoneAssemblies.Extensibility
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
 
+    using Newtonsoft.Json;
+
     using NuGet.Common;
     using NuGet.Configuration;
     using NuGet.Packaging;
@@ -33,12 +35,16 @@ namespace StoneAssemblies.Extensibility
 
     using Serilog;
 
+    using Formatting = Newtonsoft.Json.Formatting;
+
     /// <summary>
     ///     The extension manager.
     /// </summary>
     public class ExtensionManager : IExtensionManager
     {
         private readonly ExtensionManagerSettings settings;
+
+        private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
 
         /// <summary>
         ///     The target framework dependencies.
@@ -144,12 +150,7 @@ namespace StoneAssemblies.Extensibility
             }
         }
 
-        /// <summary>
-        ///     Gets the extension assemblies.
-        /// </summary>
-        /// <returns>
-        ///     The <see cref="IEnumerable{Assembly}" />.
-        /// </returns>
+        /// <inheritdoc />
         IEnumerable<Assembly> IExtensionManager.GetExtensionAssemblies()
         {
             foreach (var extension in this.extensions)
@@ -158,18 +159,131 @@ namespace StoneAssemblies.Extensibility
             }
         }
 
-        /// <summary>
-        ///     Loads the extensions from package ids.
-        /// </summary>
-        /// <returns>
-        ///     The <see cref="Task" />.
-        /// </returns>
+        /// <inheritdoc />
         async Task IExtensionManager.LoadExtensionsAsync()
         {
             await this.LoadExtensionsAsync();
             if (this.settings.Initialize)
             {
                 this.InitializeExtensions();
+            }
+        }
+
+        /// <inheritdoc />
+        async Task IExtensionManager.ScheduleInstallPackageAsync(string packageId, string version)
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                var schedule = await this.GetScheduleAsync();
+
+                var idx = schedule.UnInstall.FindIndex(s => s.StartsWith($"{packageId}"));
+                if (idx > -1)
+                {
+                    schedule.UnInstall.RemoveAt(idx);
+                }
+
+                idx = schedule.Install.FindIndex(s => s.StartsWith($"{packageId}"));
+                if (idx > -1)
+                {
+                    schedule.Install.RemoveAt(idx);
+                }
+
+                schedule.Install.Add(!string.IsNullOrEmpty(version) ? $"{packageId}:{version}" : packageId);
+
+                await File.WriteAllTextAsync(this.ScheduleFileName, JsonConvert.SerializeObject(schedule, Formatting.Indented));
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }
+
+        /// <inheritdoc />
+        async Task IExtensionManager.ScheduleUnInstallPackageAsync(string packageId)
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                var schedule = await this.GetScheduleAsync();
+                var idx = schedule.Install.FindIndex(s => s.StartsWith($"{packageId}"));
+                if (idx > -1)
+                {
+                    schedule.Install.RemoveAt(idx);
+                }
+
+                idx = schedule.UnInstall.FindIndex(s => s.StartsWith($"{packageId}"));
+                if (idx == -1)
+                {
+                    schedule.UnInstall.Add(packageId);
+                }
+
+                await File.WriteAllTextAsync(this.ScheduleFileName, JsonConvert.SerializeObject(schedule, Formatting.Indented));
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }
+
+        public async Task RemoveScheduleAsync()
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                File.Delete(this.ScheduleFileName);
+            }
+            catch
+            {
+
+            }
+            finally
+            {
+                this.semaphore.Release();
+            }
+        }
+
+        async Task<ISchedule> IExtensionManager.GetScheduleAsync()
+        {
+            return await this.GetScheduleAsync();
+        }
+
+        private async Task<Schedule> GetScheduleAsync()
+        {
+            Schedule schedule = null;
+            if (File.Exists(this.ScheduleFileName))
+            {
+                var content = await File.ReadAllTextAsync(this.ScheduleFileName);
+                try
+                {
+                    schedule = JsonConvert.DeserializeObject<Schedule>(content);
+                }
+                catch
+                {
+                }
+            }
+
+            if (schedule == null)
+            {
+                schedule = new Schedule();
+            }
+
+            return schedule;
+        }
+
+        /// <inheritdoc />
+        IExtensionManagerSettings IExtensionManager.Settings => this.settings;
+
+        private string ScheduleFileName
+        {
+            get
+            {
+                if (!Directory.Exists(this.settings.PluginsDirectory))
+                {
+                    Directory.CreateDirectory(this.settings.PluginsDirectory);
+                }
+
+                return Path.Combine(this.settings.PluginsDirectory, "schedule.json");
             }
         }
 
@@ -215,20 +329,9 @@ namespace StoneAssemblies.Extensibility
             }
         }
 
-        public async IAsyncEnumerable<ExtensionPackage> GetAvailableExtensionPackagesAsync(int skip, int take)
+        async IAsyncEnumerable<ExtensionPackage> IExtensionManager.GetAvailableExtensionPackagesAsync(int skip, int take)
         {
-            var pluginsDirectoryPath = Path.GetFullPath(this.settings.PluginsDirectory);
-            var namespaceManager = new XmlNamespaceManager(new NameTable());
-            namespaceManager.AddNamespace("nuget", "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd");
-            var installedPackages = Directory.EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories).Select(
-                filePath =>
-                    {
-                        var document = XDocument.Load(filePath);
-                        var id = document.XPathSelectElement("/nuget:package/nuget:metadata/nuget:id", namespaceManager)?.Value;
-                        var version = document.XPathSelectElement("/nuget:package/nuget:metadata/nuget:version", namespaceManager)?.Value;
-                        return (Id:id, Version:version);
-                    }).ToDictionary(valueTuple => valueTuple.Id);
-
+            var installedPackages = this.GetInstalledPackages();
             foreach (var repository in this.searchableRepositories)
             {
                 var packageSearchResource = await repository.GetResourceAsync<PackageSearchResource>();
@@ -255,6 +358,27 @@ namespace StoneAssemblies.Extensibility
             }
         }
 
+        private Dictionary<string, (string Id, string Version, string Directory)> GetInstalledPackages()
+        {
+            var pluginsDirectoryPath = Path.GetFullPath(this.settings.PluginsDirectory);
+
+            var namespaceManager = new XmlNamespaceManager(new NameTable());
+            namespaceManager.AddNamespace("nuget", "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd");
+            var installedPackages = Directory.EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories)
+                .Select(
+                    filePath =>
+                        {
+                            var document = XDocument.Load(filePath);
+                            var id = document.XPathSelectElement("/nuget:package/nuget:metadata/nuget:id", namespaceManager)
+                                ?.Value;
+                            var version = document.XPathSelectElement(
+                                "/nuget:package/nuget:metadata/nuget:version",
+                                namespaceManager)?.Value;
+                            return (Id: id, Version: version, Directory: Path.GetDirectoryName(filePath));
+                        }).ToDictionary(tuple => tuple.Id);
+            return installedPackages;
+        }
+
         /// <summary>
         ///     Loads the extensions from package ids.
         /// </summary>
@@ -264,6 +388,37 @@ namespace StoneAssemblies.Extensibility
         private async Task LoadExtensionsAsync()
         {
             var pendingPackageIds = this.settings.Packages;
+            if (!this.settings.IgnoreSchedule)
+            {
+                var schedule = await this.GetScheduleAsync();
+
+                if (schedule.Install.Count > 0)
+                {
+                    pendingPackageIds.AddRange(schedule.Install);
+                }
+
+                if (schedule.UnInstall.Count > 0)
+                {
+                    var installedPackages = this.GetInstalledPackages();
+                    foreach (var packageId in schedule.UnInstall)
+                    {
+                        if (installedPackages.TryGetValue(packageId, out var tuple))
+                        {
+                            try
+                            {
+                                Directory.Delete(tuple.Directory, true);
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Warning(ex, "Error uninstalling '{PackageId}'", packageId);
+                            }
+                        }
+                    }
+                }
+
+                await this.RemoveScheduleAsync();
+            }
+
             foreach (var sourceRepository in this.sourceRepositories)
             {
                 if (pendingPackageIds.Count == 0)
