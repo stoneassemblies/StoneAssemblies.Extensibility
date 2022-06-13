@@ -92,8 +92,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 IExtensionManager extensionManager2 = new ExtensionManager(
                     serviceCollection2,
                     configurationMock.Object,
-                    settings);
-
+                    settings2);
 
                 await extensionManager2.LoadExtensionsAsync();
 
