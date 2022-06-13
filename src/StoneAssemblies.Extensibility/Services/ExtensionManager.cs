@@ -161,9 +161,9 @@ namespace StoneAssemblies.Extensibility
             var installedPackages = this.GetInstalledPackages();
 
             VersionInfo installedVersion = null;
-            if (installedPackages.TryGetValue(id, out var value))
+            if (installedPackages.TryGetValue(id, out var tuple))
             {
-                installedVersion = new VersionInfo(new NuGetVersion(value.Version));
+                installedVersion = new VersionInfo(new NuGetVersion(tuple.Version));
             }
 
             foreach (var repository in this.searchableRepositories)
@@ -347,6 +347,9 @@ namespace StoneAssemblies.Extensibility
         /// <inheritdoc />
         IExtensionManagerSettings IExtensionManager.Settings => this.settings;
 
+        /// <summary>
+        ///     Gets the schedule file name.
+        /// </summary>
         private string ScheduleFileName
         {
             get
@@ -437,18 +440,20 @@ namespace StoneAssemblies.Extensibility
 
             var namespaceManager = new XmlNamespaceManager(new NameTable());
             namespaceManager.AddNamespace("nuget", "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd");
-            var installedPackages = Directory.EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories)
-                .Select(
+            var installedPackages = Directory
+                .EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories).Select(
                     filePath =>
                         {
                             var document = XDocument.Load(filePath);
-                            var id = document.XPathSelectElement("/nuget:package/nuget:metadata/nuget:id", namespaceManager)
-                                ?.Value;
+                            var id = document.XPathSelectElement(
+                                "/nuget:package/nuget:metadata/nuget:id",
+                                namespaceManager)?.Value;
                             var version = document.XPathSelectElement(
                                 "/nuget:package/nuget:metadata/nuget:version",
                                 namespaceManager)?.Value;
                             return (Id: id, Version: version, Directory: Path.GetDirectoryName(filePath));
-                        }).ToDictionary(tuple => tuple.Id);
+                        }).GroupBy(tuple => tuple.Id).ToDictionary(tuples => tuples.Key,tuples => tuples.OrderByDescending(tuple => tuple.Version).FirstOrDefault());
+
             return installedPackages;
         }
 
@@ -488,8 +493,6 @@ namespace StoneAssemblies.Extensibility
                         }
                     }
                 }
-
-                await this.RemoveScheduleAsync();
             }
 
             foreach (var sourceRepository in this.sourceRepositories)
@@ -530,6 +533,8 @@ namespace StoneAssemblies.Extensibility
                     }
                 }
             }
+
+            await this.RemoveScheduleAsync();
         }
 
         /// <summary>
