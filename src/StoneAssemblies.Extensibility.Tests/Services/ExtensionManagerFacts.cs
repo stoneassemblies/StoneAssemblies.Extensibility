@@ -50,6 +50,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                 settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
                 settings.IgnoreSchedule = true;
+                settings.IgnoreInstalledPackage = true;
 
                 IExtensionManager extensionManager = new ExtensionManager(
                     serviceCollection,
@@ -73,6 +74,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                 settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                settings.IgnoreInstalledPackage = true;
 
                 IExtensionManager extensionManager = new ExtensionManager(
                     serviceCollection,
@@ -103,7 +105,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                                          { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
                                          { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
                                          { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
-                                         { "Extensions:IgnoreSchedule", "true" }
+                                         { "Extensions:IgnoreSchedule", "true" },
+                                         { "Extensions:IgnoreInstalledPackage", "true" },
                                      };
 
                 var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
@@ -135,6 +138,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                 settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
                 settings.IgnoreSchedule = true;
+                settings.IgnoreInstalledPackage = true;
 
                 IExtensionManager extensionManager = new ExtensionManager(
                     serviceCollection,
@@ -186,7 +190,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                                          { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
                                          { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
                                          { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
-                                         { "Extensions:IgnoreSchedule", "true" }
+                                         { "Extensions:IgnoreSchedule", "true" },
+                                         { "Extensions:IgnoreInstalledPackage", "true" }
                                      };
 
                 var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
@@ -215,7 +220,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                                          { "Extensions:Sources:0:Uri", "../../../../../output/nuget-local/" },
                                          { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
                                          { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
-                                         { "Extensions:IgnoreSchedule", "true" }
+                                         { "Extensions:IgnoreSchedule", "true" },
+                                         { "Extensions:IgnoreInstalledPackage", "true" },
                                      };
 
                 var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
