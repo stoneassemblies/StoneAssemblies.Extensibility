@@ -437,24 +437,26 @@ namespace StoneAssemblies.Extensibility
         private Dictionary<string, (string Id, string Version, string Directory)> GetInstalledPackages()
         {
             var pluginsDirectoryPath = Path.GetFullPath(this.settings.PluginsDirectory);
+            if (!Directory.Exists(pluginsDirectoryPath))
+            {
+                return new Dictionary<string, (string Id, string Version, string Directory)>();
+            }
 
             var namespaceManager = new XmlNamespaceManager(new NameTable());
             namespaceManager.AddNamespace("nuget", "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd");
-            var installedPackages = Directory
-                .EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories).Select(
-                    filePath =>
-                        {
-                            var document = XDocument.Load(filePath);
-                            var id = document.XPathSelectElement(
-                                "/nuget:package/nuget:metadata/nuget:id",
-                                namespaceManager)?.Value;
-                            var version = document.XPathSelectElement(
-                                "/nuget:package/nuget:metadata/nuget:version",
-                                namespaceManager)?.Value;
-                            return (Id: id, Version: version, Directory: Path.GetDirectoryName(filePath));
-                        }).GroupBy(tuple => tuple.Id).ToDictionary(tuples => tuples.Key,tuples => tuples.OrderByDescending(tuple => tuple.Version).FirstOrDefault());
-
-            return installedPackages;
+            return Directory.EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories).Select(
+                filePath =>
+                    {
+                        var document = XDocument.Load(filePath);
+                        var id = document.XPathSelectElement("/nuget:package/nuget:metadata/nuget:id", namespaceManager)
+                            ?.Value;
+                        var version = document.XPathSelectElement(
+                            "/nuget:package/nuget:metadata/nuget:version",
+                            namespaceManager)?.Value;
+                        return (Id: id, Version: version, Directory: Path.GetDirectoryName(filePath));
+                    }).GroupBy(tuple => tuple.Id).ToDictionary(
+                tuples => tuples.Key,
+                tuples => tuples.OrderByDescending(tuple => tuple.Version).FirstOrDefault());
         }
 
         /// <summary>
@@ -463,39 +465,42 @@ namespace StoneAssemblies.Extensibility
         private void FixPluginsDirectory()
         {
             var pluginsDirectoryPath = Path.GetFullPath(this.settings.PluginsDirectory);
-
-            var namespaceManager = new XmlNamespaceManager(new NameTable());
-            namespaceManager.AddNamespace("nuget", "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd");
-            var cleanUpDirectories = Directory
-                .EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories).Select(
-                    filePath =>
-                        {
-                            var document = XDocument.Load(filePath);
-                            var id = document.XPathSelectElement(
-                                "/nuget:package/nuget:metadata/nuget:id",
-                                namespaceManager)?.Value;
-                            var version = document.XPathSelectElement(
-                                "/nuget:package/nuget:metadata/nuget:version",
-                                namespaceManager)?.Value;
-                            return (Id: id, Version: version, Directory: Path.GetDirectoryName(filePath));
-                        })
-                .GroupBy(tuple => tuple.Id)
-                .ToDictionary(tuples => tuples.Key, tuples => tuples.OrderByDescending(tuple => tuple.Version).Skip(1).ToList())
-                .SelectMany(pair => pair.Value).Select(tuple => tuple.Directory);
-
-            foreach (var directory in cleanUpDirectories)
+            if (Directory.Exists(pluginsDirectoryPath))
             {
-                try
-                {
-                    Log.Information("Deleting directory '{Directory}'", directory);
+                var namespaceManager = new XmlNamespaceManager(new NameTable());
+                namespaceManager.AddNamespace("nuget", "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd");
+                var cleanUpDirectories = Directory
+                    .EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories).Select(
+                        filePath =>
+                            {
+                                var document = XDocument.Load(filePath);
+                                var id = document.XPathSelectElement(
+                                    "/nuget:package/nuget:metadata/nuget:id",
+                                    namespaceManager)?.Value;
+                                var version = document.XPathSelectElement(
+                                    "/nuget:package/nuget:metadata/nuget:version",
+                                    namespaceManager)?.Value;
+                                return (Id: id, Version: version, Directory: Path.GetDirectoryName(filePath));
+                            }).GroupBy(tuple => tuple.Id)
+                    .ToDictionary(
+                        tuples => tuples.Key,
+                        tuples => tuples.OrderByDescending(tuple => tuple.Version).Skip(1).ToList())
+                    .SelectMany(pair => pair.Value).Select(tuple => tuple.Directory);
 
-                    Directory.Delete(directory, true);
-
-                    Log.Information("Deleted directory '{Directory}'", directory);
-                }
-                catch (Exception ex)
+                foreach (var directory in cleanUpDirectories)
                 {
-                    Log.Error(ex, "Error deleting directory '{Directory}'", directory);
+                    try
+                    {
+                        Log.Information("Deleting directory '{Directory}'", directory);
+
+                        Directory.Delete(directory, true);
+
+                        Log.Information("Deleted directory '{Directory}'", directory);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "Error deleting directory '{Directory}'", directory);
+                    }
                 }
             }
         }
