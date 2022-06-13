@@ -22,11 +22,21 @@ Usage
 
         {
             "Extensions": {
-                "Sources": ["https://api.nuget.org/v3/index.json", "..."],
-                "Packages" ["StoneAssemblies.MassAuth.Bank.Rules", "..."]
+                "Sources": [
+                    { 
+                        "Uri": "%PRIVATE_REPO_URL%",
+                        "Username": "%USERNAME%",
+                        "Password": "%PASSWORD%" 
+                    },
+                    { 
+                        "Uri": "https://api.nuget.org/v3/index.json",
+                        "Searchable": "false" 
+                    }
+                ],
+                "Packages" ["%PACKAGE_NAME%:%PACKAGE_VERSION%", "..."]
             }
         }
-
+       
 
 Create plugin
 ---------------
