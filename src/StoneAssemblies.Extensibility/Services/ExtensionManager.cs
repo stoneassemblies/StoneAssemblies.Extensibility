@@ -458,6 +458,49 @@ namespace StoneAssemblies.Extensibility
         }
 
         /// <summary>
+        ///     Fix plugin directory.
+        /// </summary>
+        private void FixPluginsDirectory()
+        {
+            var pluginsDirectoryPath = Path.GetFullPath(this.settings.PluginsDirectory);
+
+            var namespaceManager = new XmlNamespaceManager(new NameTable());
+            namespaceManager.AddNamespace("nuget", "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd");
+            var cleanUpDirectories = Directory
+                .EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories).Select(
+                    filePath =>
+                        {
+                            var document = XDocument.Load(filePath);
+                            var id = document.XPathSelectElement(
+                                "/nuget:package/nuget:metadata/nuget:id",
+                                namespaceManager)?.Value;
+                            var version = document.XPathSelectElement(
+                                "/nuget:package/nuget:metadata/nuget:version",
+                                namespaceManager)?.Value;
+                            return (Id: id, Version: version, Directory: Path.GetDirectoryName(filePath));
+                        })
+                .GroupBy(tuple => tuple.Id)
+                .ToDictionary(tuples => tuples.Key, tuples => tuples.OrderByDescending(tuple => tuple.Version).Skip(1).ToList())
+                .SelectMany(pair => pair.Value).Select(tuple => tuple.Directory);
+
+            foreach (var directory in cleanUpDirectories)
+            {
+                try
+                {
+                    Log.Information("Deleting directory '{Directory}'", directory);
+
+                    Directory.Delete(directory, true);
+
+                    Log.Information("Deleted directory '{Directory}'", directory);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error deleting directory '{Directory}'", directory);
+                }
+            }
+        }
+
+        /// <summary>
         ///     Loads the extensions from package ids.
         /// </summary>
         /// <returns>
@@ -465,11 +508,30 @@ namespace StoneAssemblies.Extensibility
         /// </returns>
         private async Task LoadExtensionsAsync()
         {
-            var pendingPackageIds = this.settings.Packages;
+            FixPluginsDirectory();
+
+            var pendingPackageIds = new List<string>();
+            if (this.settings.IgnoreInstalledPackage)
+            {
+                pendingPackageIds.AddRange(this.settings.Packages);
+            }
+            else
+            {
+                var installedPackages = this.GetInstalledPackages();
+                pendingPackageIds.AddRange(installedPackages.Select(pair => $"{pair.Key}:{pair.Value.Version}"));
+                foreach (var packageId in this.settings.Packages)
+                {
+                    var packageIdParts = packageId.Split(":");
+                    if (!installedPackages.TryGetValue(packageIdParts[0], out _))
+                    {
+                        pendingPackageIds.Add(packageId);
+                    }
+                }
+            }
+
             if (!this.settings.IgnoreSchedule)
             {
                 var schedule = await this.GetScheduleAsync();
-
                 if (schedule.Install.Count > 0)
                 {
                     pendingPackageIds.AddRange(schedule.Install);

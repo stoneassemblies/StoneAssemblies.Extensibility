@@ -41,5 +41,10 @@
         /// Gets or sets a value indicating whether skip schedule.
         /// </summary>
         public bool IgnoreSchedule { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether clean install.
+        /// </summary>
+        public bool IgnoreInstalledPackage { get; set; }
     }
 }

@@ -161,6 +161,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var settings = new ExtensionManagerSettings();
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                 settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                settings.IgnoreInstalledPackage  = true;
                 settings.IgnoreSchedule = true;
 
                 IExtensionManager extensionManager = new ExtensionManager(
