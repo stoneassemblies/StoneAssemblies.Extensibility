@@ -63,6 +63,44 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             }
 
             [Test]
+            public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection_From_Already_Installed_Packages()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+                settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
+
+                settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
+                settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                settings.IgnoreSchedule = true;
+                settings.IgnoreInstalledPackage = true;
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.LoadExtensionsAsync();
+
+                var settings2 = new ExtensionManagerSettings();
+                settings2.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
+                settings2.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                settings2.IgnoreSchedule = true;
+
+                var serviceCollection2 = new ServiceCollection();
+                IExtensionManager extensionManager2 = new ExtensionManager(
+                    serviceCollection2,
+                    configurationMock.Object,
+                    settings);
+
+
+                await extensionManager2.LoadExtensionsAsync();
+
+                Assert.IsNotEmpty(serviceCollection2);
+            }
+
+            [Test]
             public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection_Loading_Plugins_From_The_Schedule()
             {
                 var currentDirectory = Directory.GetCurrentDirectory();
@@ -191,7 +229,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                                          { "Extensions:Sources:1:Uri", "https://api.nuget.org/v3/index.json" },
                                          { "Extensions:Packages:0", "StoneAssemblies.Extensibility.DemoPlugin" },
                                          { "Extensions:IgnoreSchedule", "true" },
-                                         { "Extensions:IgnoreInstalledPackage", "true" }
+                                         { "Extensions:IgnoreInstalledPackage", "true" },
                                      };
 
                 var configuration = new ConfigurationBuilder().AddInMemoryCollection(dictionary).Build();
