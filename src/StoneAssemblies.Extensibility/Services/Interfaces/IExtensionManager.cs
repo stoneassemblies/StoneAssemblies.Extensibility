@@ -103,9 +103,14 @@ namespace StoneAssemblies.Extensibility
         Task ScheduleUnInstallPackageAsync(string packageId);
 
         /// <summary>
-        /// Clears the schedule.
+        ///     Remove the schedule.
         /// </summary>
         Task RemoveScheduleAsync();
+
+        /// <summary>
+        ///     Clears cache.
+        /// </summary>
+        Task ResetAsync();
 
         /// <summary>
         /// Determines whether the package scheduled to install.
@@ -127,6 +132,6 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         /// The <see cref="Task"/>.
         /// </returns>
-        Task<bool> IsPackageScheduledToUnInstallAsync(string packageId);
+        Task<bool> IsPackageScheduledToUninstallAsync(string packageId);
     }
 }

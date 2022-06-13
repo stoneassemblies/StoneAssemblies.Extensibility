@@ -21,31 +21,12 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
     using NUnit.Framework;
 
-    using Serilog;
-
-
     /// <summary>
     ///     The extension manager tests.
     /// </summary>
     [TestFixture]
     public class ExtensionManagerFacts
     {
-        ///// <summary>
-        /////     Initializes the ExtensionManagerFacts
-        ///// </summary>
-        ///// <param name="output">
-        /////     The output.
-        ///// </param>
-        //public ExtensionManagerFacts(ITestOutputHelper output)
-        //{
-        //    Log.Logger = new LoggerConfiguration()
-        //        // add the xunit test output sink to the serilog logger
-        //        // https://github.com/trbenning/serilog-sinks-xunit#serilog-sinks-xunit
-        //        .WriteTo.TestOutput(output)
-        //        .WriteTo.File(@"c:\tmp\x-log.txt", rollingInterval: RollingInterval.Day)
-        //        .CreateLogger();
-        //}
-
         [TestFixture]
         public class The_LoadExtensionsAsync_Method
         {
@@ -479,7 +460,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.ScheduleUnInstallPackageAsync("StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.IsTrue(await extensionManager.IsPackageScheduledToUnInstallAsync("StoneAssemblies.Extensibility.DemoPlugin"));
+                Assert.IsTrue(await extensionManager.IsPackageScheduledToUninstallAsync("StoneAssemblies.Extensibility.DemoPlugin"));
             }
 
             [Test]
@@ -499,7 +480,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.ScheduleUnInstallPackageAsync("StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.IsFalse(await extensionManager.IsPackageScheduledToUnInstallAsync("StoneAssemblies.Extensibility.DemoPlugin2"));
+                Assert.IsFalse(await extensionManager.IsPackageScheduledToUninstallAsync("StoneAssemblies.Extensibility.DemoPlugin2"));
             }
         }
 
@@ -523,7 +504,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.ScheduleUnInstallPackageAsync("StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.IsTrue(await extensionManager.IsPackageScheduledToUnInstallAsync("StoneAssemblies.Extensibility.DemoPlugin"));
+                Assert.IsTrue(await extensionManager.IsPackageScheduledToUninstallAsync("StoneAssemblies.Extensibility.DemoPlugin"));
             }
 
             [Test]
@@ -546,7 +527,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 var schedule = await extensionManager.GetScheduleAsync();
 
-                Assert.AreEqual(1, schedule.UnInstall.Count(s => s.StartsWith("StoneAssemblies.Extensibility.DemoPlugin")));
+                Assert.AreEqual(1, schedule.Uninstall.Count(s => s.StartsWith("StoneAssemblies.Extensibility.DemoPlugin")));
             }
         }
 

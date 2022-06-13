@@ -42,8 +42,14 @@ namespace StoneAssemblies.Extensibility
     /// </summary>
     public class ExtensionManager : IExtensionManager
     {
+        /// <summary>
+        ///     The settings
+        /// </summary>
         private readonly ExtensionManagerSettings settings;
 
+        /// <summary>
+        ///     The semaphore slim.
+        /// </summary>
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
 
         /// <summary>
@@ -105,7 +111,7 @@ namespace StoneAssemblies.Extensibility
         {
             AssemblyLoadContext.Default.ResolvingUnmanagedDll += this.OnAssemblyLoadContextResolvingUnmanagedDll;
             AppDomain.CurrentDomain.AssemblyResolve += this.OnCurrentAppDomainAssemblyResolve;
-            
+
             var extensionSources = new List<ExtensionSource>();
             if (this.settings.Sources != null)
             {
@@ -177,7 +183,7 @@ namespace StoneAssemblies.Extensibility
 
             return new ExtensionPackage(id, null, installedVersion);
         }
-    
+
         /// <inheritdoc />
         IEnumerable<Assembly> IExtensionManager.GetExtensionAssemblies()
         {
@@ -195,6 +201,35 @@ namespace StoneAssemblies.Extensibility
             {
                 this.InitializeExtensions();
             }
+        }
+
+        /// <inheritdoc />
+        public Task ResetAsync()
+        {
+            var directories = new List<string>
+                                  {
+                                      this.settings.CacheDirectory,
+                                      this.settings.PluginsDependenciesDirectory,
+                                      this.settings.PluginsDirectory
+                                  };
+            
+            foreach (var directory in directories)
+            {
+                try
+                {
+                    Log.Information("Deleting directory '{Directory}'", directory);
+
+                    Directory.Delete(directory, true);
+                    
+                    Log.Information("Deleted directory '{Directory}'", directory);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Error deleting directory '{Directory}'", directory);
+                }
+            }
+
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc />
@@ -218,13 +253,13 @@ namespace StoneAssemblies.Extensibility
         }
 
         /// <inheritdoc />
-        async Task<bool> IExtensionManager.IsPackageScheduledToUnInstallAsync(string packageId)
+        async Task<bool> IExtensionManager.IsPackageScheduledToUninstallAsync(string packageId)
         {
             await semaphore.WaitAsync();
             try
             {
                 var schedule = await this.GetScheduleAsync();
-                return schedule.IsPackageScheduledToUnInstall(packageId);
+                return schedule.IsPackageScheduledToUninstall(packageId);
             }
             finally
             {
@@ -264,6 +299,7 @@ namespace StoneAssemblies.Extensibility
             }
         }
 
+        /// <inheritdoc />
         public async Task RemoveScheduleAsync()
         {
             await semaphore.WaitAsync();
@@ -273,7 +309,6 @@ namespace StoneAssemblies.Extensibility
             }
             catch
             {
-
             }
             finally
             {
@@ -435,10 +470,10 @@ namespace StoneAssemblies.Extensibility
                     pendingPackageIds.AddRange(schedule.Install);
                 }
 
-                if (schedule.UnInstall.Count > 0)
+                if (schedule.Uninstall.Count > 0)
                 {
                     var installedPackages = this.GetInstalledPackages();
-                    foreach (var packageId in schedule.UnInstall)
+                    foreach (var packageId in schedule.Uninstall)
                     {
                         if (installedPackages.TryGetValue(packageId, out var tuple))
                         {

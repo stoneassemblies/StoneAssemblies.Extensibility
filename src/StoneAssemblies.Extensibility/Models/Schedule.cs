@@ -3,6 +3,9 @@
     using System;
     using System.Collections.Generic;
 
+    /// <summary>
+    /// The schedule.
+    /// </summary>
     public sealed class Schedule : ISchedule
     {
         /// <summary>
@@ -13,7 +16,7 @@
         /// <summary>
         /// Gets the un install.
         /// </summary>
-        public List<string> UnInstall { get; } = new List<string>();
+        public List<string> Uninstall { get; } = new List<string>();
 
         /// <summary>
         /// The install.
@@ -23,7 +26,7 @@
         /// <summary>
         /// The un install.
         /// </summary>
-        IReadOnlyCollection<string> ISchedule.UnInstall => UnInstall?.AsReadOnly();
+        IReadOnlyCollection<string> ISchedule.Uninstall => this.Uninstall?.AsReadOnly();
 
         /// <summary>
         /// Determines whether the package scheduled to uninstall.
@@ -34,9 +37,9 @@
         /// <returns>
         /// The <see cref="bool"/>.
         /// </returns>
-        public bool IsPackageScheduledToUnInstall(string packageId)
+        public bool IsPackageScheduledToUninstall(string packageId)
         {
-            var idx = this.UnInstall.FindIndex(s => s == packageId);
+            var idx = this.Uninstall.FindIndex(s => s == packageId);
             return idx >= 0;
         }
 
@@ -81,10 +84,10 @@
         /// </param>
         public void ScheduleInstallPackage(string packageId, string version)
         {
-            var idx = this.UnInstall.FindIndex(UnInstallMatch(packageId));
+            var idx = this.Uninstall.FindIndex(UnInstallMatch(packageId));
             if (idx > -1)
             {
-                this.UnInstall.RemoveAt(idx);
+                this.Uninstall.RemoveAt(idx);
             }
 
             idx = this.Install.FindIndex(InstallMatch(packageId));
@@ -124,10 +127,10 @@
                 this.Install.RemoveAt(idx);
             }
 
-            idx = this.UnInstall.FindIndex(s => s == packageId);
+            idx = this.Uninstall.FindIndex(s => s == packageId);
             if (idx == -1)
             {
-                this.UnInstall.Add(packageId);
+                this.Uninstall.Add(packageId);
             }
         }
 
