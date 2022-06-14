@@ -45,6 +45,6 @@
         /// <summary>
         /// Gets or sets a value indicating whether clean install.
         /// </summary>
-        public bool IgnoreInstalledPackage { get; set; }
+        public bool IgnoreInstalledExtensions { get; set; }
     }
 }

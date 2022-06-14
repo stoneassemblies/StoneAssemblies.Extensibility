@@ -119,7 +119,7 @@
         /// <param name="packageId">
         /// The package id.
         /// </param>
-        public void ScheduleUnInstallPackage(string packageId)
+        public void ScheduleUninstallExtension(string packageId)
         {
             var idx = this.Install.FindIndex(InstallMatch(packageId));
             if (idx > -1)

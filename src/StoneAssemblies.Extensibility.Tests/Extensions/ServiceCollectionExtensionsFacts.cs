@@ -41,7 +41,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                             settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                             settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
                             settings.IgnoreSchedule = true;
-                            settings.IgnoreInstalledPackage = true;
+                            settings.IgnoreInstalledExtensions = true;
                         });
 
                 Assert.AreEqual(2, serviceCollection.Count);
@@ -65,7 +65,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                             settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
                             settings.Initialize = false;
                             settings.IgnoreSchedule = true;
-                            settings.IgnoreInstalledPackage = true;
+                            settings.IgnoreInstalledExtensions = true;
                         });
 
                 Assert.AreEqual(1, serviceCollection.Count);

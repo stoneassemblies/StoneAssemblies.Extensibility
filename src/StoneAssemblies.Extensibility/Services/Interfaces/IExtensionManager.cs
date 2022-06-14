@@ -48,16 +48,16 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         ///     The <see cref="IAsyncEnumerable{ExtensionPackage}" />.
         /// </returns>
-        IAsyncEnumerable<ExtensionPackage> GetAvailableExtensionPackagesAsync(int skip, int take);
+        IAsyncEnumerable<ExtensionPackage> GetAvailableExtensionsAsync(int skip, int take);
 
         /// <summary>
-        /// Gets extension package by id async.
+        ///     Gets extension package by id async.
         /// </summary>
         /// <param name="id">
-        /// The id.
+        ///     The id.
         /// </param>
         /// <returns>
-        /// The <see cref="Task"/>.
+        ///     The <see cref="Task" />.
         /// </returns>
         Task<ExtensionPackage> GetExtensionPackageByIdAsync(string id);
 
@@ -100,7 +100,7 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        Task ScheduleUnInstallPackageAsync(string packageId);
+        Task ScheduleUninstallExtensionAsync(string packageId);
 
         /// <summary>
         ///     Remove the schedule.
@@ -113,25 +113,25 @@ namespace StoneAssemblies.Extensibility
         Task ResetAsync();
 
         /// <summary>
-        /// Determines whether the package scheduled to install.
+        ///     Determines whether the extension scheduled to install.
         /// </summary>
         /// <param name="packageId">
-        /// The package id.
+        ///     The package id.
         /// </param>
         /// <returns>
-        /// The <see cref="Task"/>.
+        ///     The <see cref="Task" />.
         /// </returns>
-        Task<(bool Scheduled, string Version)> IsPackageScheduledToInstallAsync(string packageId);
+        Task<(bool Scheduled, string Version)> IsExtensionScheduledToInstallAsync(string packageId);
 
         /// <summary>
-        /// Determines whether the package is scheduled to uninstall.
+        ///     Determines whether the extension is scheduled to uninstall.
         /// </summary>
         /// <param name="packageId">
-        /// The package id.
+        ///     The package id.
         /// </param>
         /// <returns>
-        /// The <see cref="Task"/>.
+        ///     The <see cref="Task" />.
         /// </returns>
-        Task<bool> IsPackageScheduledToUninstallAsync(string packageId);
+        Task<bool> IsExtensionScheduledToUninstallAsync(string packageId);
     }
 }
