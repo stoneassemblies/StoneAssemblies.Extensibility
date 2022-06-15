@@ -31,7 +31,7 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         ///     The <see cref="IExtensionManager" />.
         /// </returns>
-        public static IExtensionManager AddExtensions(
+        public static IExtensionManager AddExtensionPackages(
             this IServiceCollection serviceCollection,
             IConfiguration configuration, Action<ExtensionManagerSettings> configure = null)
         {
@@ -44,7 +44,7 @@ namespace StoneAssemblies.Extensibility
 
             IExtensionManager extensionManager = new ExtensionManager(serviceCollection, configuration, settings);
             serviceCollection.AddSingleton(extensionManager);
-            extensionManager.LoadExtensionsAsync().GetAwaiter().GetResult();
+            extensionManager.LoadExtensionPackagesAsync().GetAwaiter().GetResult();
             return extensionManager;
         }
     }

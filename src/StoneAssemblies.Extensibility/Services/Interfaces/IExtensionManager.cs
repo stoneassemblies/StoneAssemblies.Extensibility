@@ -48,7 +48,7 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         ///     The <see cref="IAsyncEnumerable{ExtensionPackage}" />.
         /// </returns>
-        IAsyncEnumerable<ExtensionPackage> GetAvailableExtensionsAsync(int skip, int take);
+        IAsyncEnumerable<ExtensionPackage> GetAvailableExtensionPackagesAsync(int skip, int take);
 
         /// <summary>
         ///     Gets extension package by id async.
@@ -67,7 +67,7 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         ///     The <see cref="IEnumerable{Assembly}" />.
         /// </returns>
-        IEnumerable<Assembly> GetExtensionAssemblies();
+        IEnumerable<Assembly> GetExtensionPackageAssemblies();
 
         /// <summary>
         ///     Loads the extensions from package ids.
@@ -75,7 +75,7 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        Task LoadExtensionsAsync();
+        Task LoadExtensionPackagesAsync();
 
         /// <summary>
         ///     Schedule install package.
@@ -89,7 +89,7 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        Task ScheduleInstallPackageAsync(string packageId, string version);
+        Task ScheduleInstallExtensionPackageAsync(string packageId, string version);
 
         /// <summary>
         ///     Schedule uninstall package.
@@ -100,7 +100,7 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        Task ScheduleUninstallExtensionAsync(string packageId);
+        Task ScheduleUninstallExtensionPackageAsync(string packageId);
 
         /// <summary>
         ///     Remove the schedule.
@@ -121,7 +121,7 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        Task<(bool Scheduled, string Version)> IsExtensionScheduledToInstallAsync(string packageId);
+        Task<(bool Scheduled, string Version)> IsExtensionPackageScheduledToInstallAsync(string packageId);
 
         /// <summary>
         ///     Determines whether the extension is scheduled to uninstall.
@@ -132,6 +132,6 @@ namespace StoneAssemblies.Extensibility
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        Task<bool> IsExtensionScheduledToUninstallAsync(string packageId);
+        Task<bool> IsExtensionPackageScheduledToUninstallAsync(string packageId);
     }
 }

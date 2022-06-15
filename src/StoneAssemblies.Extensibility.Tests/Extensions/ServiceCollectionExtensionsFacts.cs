@@ -22,7 +22,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
         ///     The add extensions method.
         /// </summary>
         [TestFixture]
-        public class The_AddExtensions_Method
+        public class The_AddExtensionPackages_Method
         {
             /// <summary>
             ///     Initializes the plugin registering services in service collection.
@@ -33,7 +33,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                 var configurationMock = new Mock<IConfiguration>();
                 var serviceCollection = new ServiceCollection();
 
-                serviceCollection.AddExtensions(
+                serviceCollection.AddExtensionPackages(
                     configurationMock.Object,
                     settings =>
                         {
@@ -41,7 +41,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                             settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                             settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
                             settings.IgnoreSchedule = true;
-                            settings.IgnoreInstalledExtensions = true;
+                            settings.IgnoreInstalledExtensionPackages = true;
                         });
 
                 Assert.AreEqual(2, serviceCollection.Count);
@@ -56,7 +56,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                 var configurationMock = new Mock<IConfiguration>();
                 var serviceCollection = new ServiceCollection();
 
-                serviceCollection.AddExtensions(
+                serviceCollection.AddExtensionPackages(
                     configurationMock.Object,
                     settings =>
                         {
@@ -65,7 +65,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                             settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
                             settings.Initialize = false;
                             settings.IgnoreSchedule = true;
-                            settings.IgnoreInstalledExtensions = true;
+                            settings.IgnoreInstalledExtensionPackages = true;
                         });
 
                 Assert.AreEqual(1, serviceCollection.Count);
@@ -81,7 +81,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
             var configurationMock = new Mock<IConfiguration>();
             var serviceCollection = new ServiceCollection();
 
-            serviceCollection.AddExtensions(
+            serviceCollection.AddExtensionPackages(
                 configurationMock.Object,
                 settings =>
                     {
@@ -103,7 +103,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
             var configurationMock = new Mock<IConfiguration>();
             var serviceCollection = new ServiceCollection();
 
-            var extensionManager = serviceCollection.AddExtensions(
+            var extensionManager = serviceCollection.AddExtensionPackages(
                 configurationMock.Object,
                 settings =>
                     {

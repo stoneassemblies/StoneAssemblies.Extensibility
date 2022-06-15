@@ -21,7 +21,7 @@
         /// <summary>
         /// The install.
         /// </summary>
-        IReadOnlyCollection<string> ISchedule.Install => Install?.AsReadOnly();
+        IReadOnlyCollection<string> ISchedule.Install => this.Install?.AsReadOnly();
 
         /// <summary>
         /// The un install.
@@ -37,7 +37,7 @@
         /// <returns>
         /// The <see cref="bool"/>.
         /// </returns>
-        public bool IsPackageScheduledToUninstall(string packageId)
+        public bool IsExtensionPackageScheduledToUninstall(string packageId)
         {
             var idx = this.Uninstall.FindIndex(s => s == packageId);
             return idx >= 0;
@@ -55,7 +55,7 @@
         /// <returns>
         /// The <see cref="bool"/>.
         /// </returns>
-        public bool IsPackageScheduledToInstall(string packageId, out string version)
+        public bool IsExtensionPackageScheduledToInstall(string packageId, out string version)
         {
             version = string.Empty;
             var idx = this.Install.FindIndex(InstallMatch(packageId));
@@ -82,7 +82,7 @@
         /// <param name="version">
         /// The version.
         /// </param>
-        public void ScheduleInstallPackage(string packageId, string version)
+        public void ScheduleInstallExtensionPackage(string packageId, string version)
         {
             var idx = this.Uninstall.FindIndex(UnInstallMatch(packageId));
             if (idx > -1)
@@ -119,7 +119,7 @@
         /// <param name="packageId">
         /// The package id.
         /// </param>
-        public void ScheduleUninstallExtension(string packageId)
+        public void ScheduleUninstallExtensionPackage(string packageId)
         {
             var idx = this.Install.FindIndex(InstallMatch(packageId));
             if (idx > -1)

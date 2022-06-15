@@ -185,7 +185,7 @@ namespace StoneAssemblies.Extensibility
         }
 
         /// <inheritdoc />
-        IEnumerable<Assembly> IExtensionManager.GetExtensionAssemblies()
+        IEnumerable<Assembly> IExtensionManager.GetExtensionPackageAssemblies()
         {
             foreach (var extension in this.extensions)
             {
@@ -194,7 +194,7 @@ namespace StoneAssemblies.Extensibility
         }
 
         /// <inheritdoc />
-        async Task IExtensionManager.LoadExtensionsAsync()
+        async Task IExtensionManager.LoadExtensionPackagesAsync()
         {
             await this.LoadExtensionsAsync();
             if (this.settings.Initialize)
@@ -233,13 +233,13 @@ namespace StoneAssemblies.Extensibility
         }
 
         /// <inheritdoc />
-        async Task<(bool Scheduled, string Version)> IExtensionManager.IsExtensionScheduledToInstallAsync(string packageId)
+        async Task<(bool Scheduled, string Version)> IExtensionManager.IsExtensionPackageScheduledToInstallAsync(string packageId)
         {
             await semaphore.WaitAsync();
             try
             {
                 var schedule = await this.GetScheduleAsync();
-                if (schedule.IsPackageScheduledToInstall(packageId, out var version))
+                if (schedule.IsExtensionPackageScheduledToInstall(packageId, out var version))
                 {
                     return (true, version);
                 }
@@ -253,13 +253,13 @@ namespace StoneAssemblies.Extensibility
         }
 
         /// <inheritdoc />
-        async Task<bool> IExtensionManager.IsExtensionScheduledToUninstallAsync(string packageId)
+        async Task<bool> IExtensionManager.IsExtensionPackageScheduledToUninstallAsync(string packageId)
         {
             await semaphore.WaitAsync();
             try
             {
                 var schedule = await this.GetScheduleAsync();
-                return schedule.IsPackageScheduledToUninstall(packageId);
+                return schedule.IsExtensionPackageScheduledToUninstall(packageId);
             }
             finally
             {
@@ -268,13 +268,13 @@ namespace StoneAssemblies.Extensibility
         }
 
         /// <inheritdoc />
-        async Task IExtensionManager.ScheduleInstallPackageAsync(string packageId, string version)
+        async Task IExtensionManager.ScheduleInstallExtensionPackageAsync(string packageId, string version)
         {
             await semaphore.WaitAsync();
             try
             {
                 var schedule = await this.GetScheduleAsync();
-                schedule.ScheduleInstallPackage(packageId, version);
+                schedule.ScheduleInstallExtensionPackage(packageId, version);
                 await File.WriteAllTextAsync(this.ScheduleFileName, JsonConvert.SerializeObject(schedule, Formatting.Indented));
             }
             finally
@@ -284,13 +284,13 @@ namespace StoneAssemblies.Extensibility
         }
 
         /// <inheritdoc />
-        async Task IExtensionManager.ScheduleUninstallExtensionAsync(string packageId)
+        async Task IExtensionManager.ScheduleUninstallExtensionPackageAsync(string packageId)
         {
             await semaphore.WaitAsync();
             try
             {
                 var schedule = await this.GetScheduleAsync();
-                schedule.ScheduleUninstallExtension(packageId);
+                schedule.ScheduleUninstallExtensionPackage(packageId);
                 await File.WriteAllTextAsync(this.ScheduleFileName, JsonConvert.SerializeObject(schedule, Formatting.Indented));
             }
             finally
@@ -407,7 +407,7 @@ namespace StoneAssemblies.Extensibility
             }
         }
 
-        async IAsyncEnumerable<ExtensionPackage> IExtensionManager.GetAvailableExtensionsAsync(int skip, int take)
+        async IAsyncEnumerable<ExtensionPackage> IExtensionManager.GetAvailableExtensionPackagesAsync(int skip, int take)
         {
             var installedPackages = this.GetInstalledExtensions();
             foreach (var repository in this.searchableRepositories)
@@ -518,7 +518,7 @@ namespace StoneAssemblies.Extensibility
             FixPluginsDirectory();
 
             var pendingPackageIds = new List<string>();
-            if (this.settings.IgnoreInstalledExtensions)
+            if (this.settings.IgnoreInstalledExtensionPackages)
             {
                 pendingPackageIds.AddRange(this.settings.Packages);
             }
