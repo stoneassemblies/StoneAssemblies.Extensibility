@@ -1,4 +1,10 @@
-﻿namespace StoneAssemblies.Extensibility
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ExtensionManagerSettings.cs" company="Stone Assemblies">
+// Copyright © 2021 - 2022 Stone Assemblies. All rights reserved.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace StoneAssemblies.Extensibility
 {
     using System.Collections.Generic;
 
@@ -46,5 +52,10 @@
         /// Gets or sets a value indicating whether clean install.
         /// </summary>
         public bool IgnoreInstalledExtensionPackages { get; set; }
+
+        /// <summary>
+        /// Gets or sets the black list.
+        /// </summary>
+        public List<string> Blacklist { get; } = new List<string>();
     }
 }

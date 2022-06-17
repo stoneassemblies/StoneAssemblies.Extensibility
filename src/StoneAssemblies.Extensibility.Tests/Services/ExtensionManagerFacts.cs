@@ -313,8 +313,10 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var configurationMock = new Mock<IConfiguration>();
                 var serviceCollection = new ServiceCollection();
 
-                var settings = new ExtensionManagerSettings();
-                settings.IgnoreSchedule = true;
+                var settings = new ExtensionManagerSettings
+                                   {
+                                       IgnoreSchedule = true
+                                   };
                 settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
 
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
@@ -335,6 +337,66 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 Assert.NotNull(extensionPackage?.InstalledVersion);
                 Assert.NotNull(extensionPackage?.Versions);
+            }
+
+            [Test]
+            public async Task Does_Not_Returns_The_Package_If_The_Id_In_The_Blacklist_Async()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings
+                                   {
+                                       IgnoreSchedule = true
+                                   };
+
+                settings.Blacklist.Add("StoneAssemblies.Extensibility.DemoPlugin");
+
+                settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
+                settings.Sources.Add(
+                    new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json", Searchable = false });
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                var extensionPackages = await extensionManager.GetAvailableExtensionPackagesAsync(0, 10).ToListAsync();
+
+                var extensionPackage = extensionPackages.FirstOrDefault(
+                    package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
+
+                Assert.IsNull(extensionPackage?.Versions);
+            }
+
+            [Test]
+            public async Task Does_Not_Returns_The_Package_If_The_Id_Matches_With_A_Regex_In_The_Blacklist_Async()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings
+                                   {
+                                       IgnoreSchedule = true
+                                   };
+
+                settings.Blacklist.Add(".+DemoPlugin");
+
+                settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
+                settings.Sources.Add(
+                    new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json", Searchable = false });
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                var extensionPackages = await extensionManager.GetAvailableExtensionPackagesAsync(0, 10).ToListAsync();
+
+                var extensionPackage = extensionPackages.FirstOrDefault(
+                    package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
+
+                Assert.IsNull(extensionPackage?.Versions);
             }
 
             [Test]

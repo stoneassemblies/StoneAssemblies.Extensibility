@@ -14,6 +14,7 @@ namespace StoneAssemblies.Extensibility
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Runtime.Loader;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using System.Xml;
@@ -407,34 +408,55 @@ namespace StoneAssemblies.Extensibility
             }
         }
 
-        async IAsyncEnumerable<ExtensionPackage> IExtensionManager.GetAvailableExtensionPackagesAsync(int skip, int take)
+        async IAsyncEnumerable<ExtensionPackage> IExtensionManager.GetAvailableExtensionPackagesAsync(
+            int skip, int take)
         {
             var installedPackages = this.GetInstalledExtensions();
             foreach (var repository in this.searchableRepositories)
             {
                 var packageSearchResource = await repository.GetResourceAsync<PackageSearchResource>();
                 var searchFilter = new SearchFilter(true);
-                var searchResults = await packageSearchResource.SearchAsync("", searchFilter, skip, take, NullLogger.Instance, CancellationToken.None);
+                var searchResults = await packageSearchResource.SearchAsync(
+                                        "",
+                                        searchFilter,
+                                        skip,
+                                        take,
+                                        NullLogger.Instance,
+                                        CancellationToken.None);
+
                 foreach (var packageSearchMetadata in searchResults)
                 {
+                    if (this.settings.IsInBlacklist(packageSearchMetadata.Identity.Id))
+                    {
+                        continue;
+                    }
+
                     var versionInfos = (await packageSearchMetadata.GetVersionsAsync()).ToList();
                     VersionInfo installedVersion = null;
                     if (installedPackages.TryGetValue(packageSearchMetadata.Identity.Id, out var installedPackage))
                     {
-                        installedVersion = versionInfos?.FirstOrDefault(info => info.Version.OriginalVersion == installedPackage.Version);
+                        installedVersion = versionInfos?.FirstOrDefault(
+                            info => info.Version.OriginalVersion == installedPackage.Version);
                         installedPackages.Remove(packageSearchMetadata.Identity.Id);
                     }
 
-                    yield return new ExtensionPackage(packageSearchMetadata.Identity.Id, versionInfos, installedVersion);
+                    yield return new ExtensionPackage(
+                        packageSearchMetadata.Identity.Id,
+                        versionInfos,
+                        installedVersion);
                 }
             }
 
             foreach (var installedPackage in installedPackages)
             {
                 var installedPackageValue = installedPackage.Value;
-                yield return new ExtensionPackage(installedPackage.Key, null, new VersionInfo(new NuGetVersion(installedPackageValue.Version)));
+                yield return new ExtensionPackage(
+                    installedPackage.Key,
+                    null,
+                    new VersionInfo(new NuGetVersion(installedPackageValue.Version)));
             }
         }
+
 
         private Dictionary<string, (string Id, string Version, string Directory)> GetInstalledExtensions()
         {

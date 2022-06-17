@@ -42,5 +42,16 @@
         ///     Gets the version infos.
         /// </summary>
         public List<VersionInfo> Versions { get; }
+
+        /// <summary>
+        /// The to string.
+        /// </summary>
+        /// <returns>
+        /// The <see cref="string"/>.
+        /// </returns>
+        public override string ToString()
+        {
+            return "${Id} (Installed version: {InstalledVersion}";
+        }
     }
 }
