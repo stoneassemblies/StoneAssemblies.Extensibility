@@ -956,9 +956,9 @@ namespace StoneAssemblies.Extensibility
                     try
                     {
                         Log.Information("Loading assembly from local copy {FileName}", assemblyLocalCopyFilePath);
-
+#pragma warning disable S3885 // "Assembly.Load" should be used
                         assembly = Assembly.LoadFrom(assemblyLocalCopyFilePath);
-
+#pragma warning restore S3885 // "Assembly.Load" should be used
                         Log.Information("Loaded assembly from local copy {FileName}", assemblyLocalCopyFilePath);
                     }
                     catch (Exception ex)
