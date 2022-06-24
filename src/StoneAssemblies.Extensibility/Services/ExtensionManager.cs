@@ -217,7 +217,7 @@ namespace StoneAssemblies.Extensibility
                                       this.settings.PluginsDependenciesDirectory,
                                       this.settings.PluginsDirectory
                                   };
-            
+
             foreach (var directory in directories)
             {
                 try
@@ -225,7 +225,7 @@ namespace StoneAssemblies.Extensibility
                     Log.Information("Deleting directory '{Directory}'", directory);
 
                     Directory.Delete(directory, true);
-                    
+
                     Log.Information("Deleted directory '{Directory}'", directory);
                 }
                 catch (Exception ex)
@@ -713,26 +713,29 @@ namespace StoneAssemblies.Extensibility
         private async Task DownloadDependenciesAsync(string packageFileName)
         {
             using var archiveReader = new PackageArchiveReader(packageFileName);
-            foreach (var dependencyGroup in archiveReader.GetPackageDependencies())
-            {
-                if (TargetFrameworkDependencies.Contains(dependencyGroup.TargetFramework.DotNetFrameworkName, StringComparer.InvariantCultureIgnoreCase))
-                {
-                    foreach (var packageDependency in dependencyGroup.Packages)
-                    {
-                        var packageName = packageDependency.Id;
-                        var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(
-                            a => packageName.Equals(a.GetName()?.Name, StringComparison.InvariantCultureIgnoreCase));
-                        if (assembly == null)
-                        {
-                            await this.EnsureDownloadPackageAsync(packageDependency, this.settings.PluginsDependenciesDirectory);
-                        }
-                        else
-                        {
-                            Log.Warning("Skipping download package {PackageName} because its name matches with an already loaded assembly.", packageName);
-                        }
-                    }
 
-                    break;
+            var packageDependencies = archiveReader.GetPackageDependencies()
+                .Where(
+                    dependencyGroup => TargetFrameworkDependencies.Contains(
+                        dependencyGroup.TargetFramework.DotNetFrameworkName,
+                        StringComparer.InvariantCultureIgnoreCase)).SelectMany(group => group.Packages);
+
+            foreach (var packageDependency in packageDependencies)
+            {
+                var packageName = packageDependency.Id;
+                var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(
+                    a => packageName.Equals(a.GetName()?.Name, StringComparison.InvariantCultureIgnoreCase));
+                if (assembly == null)
+                {
+                    await this.EnsureDownloadPackageAsync(
+                        packageDependency,
+                        this.settings.PluginsDependenciesDirectory);
+                }
+                else
+                {
+                    Log.Warning(
+                        "Skipping download package {PackageName} because its name matches with an already loaded assembly.",
+                        packageName);
                 }
             }
         }
