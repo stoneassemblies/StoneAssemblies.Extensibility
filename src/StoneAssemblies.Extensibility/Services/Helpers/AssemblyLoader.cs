@@ -10,6 +10,7 @@ namespace StoneAssemblies.Extensibility
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Net.Sockets;
     using System.Reflection;
     using System.Runtime.InteropServices;
 
@@ -64,11 +65,10 @@ namespace StoneAssemblies.Extensibility
             var packageDirectories = Directory
                 .EnumerateFiles(directoryPath, fileName + ".dll", SearchOption.AllDirectories)
                 .GroupBy(f => f.Substring(0, f.IndexOf(Path.DirectorySeparatorChar, directoryPath.Length + 1)))
-                .ToList();
+                .Select(grouping => grouping.Key).ToList();
 
-            foreach (var grouping in packageDirectories)
+            foreach (var packageDirectory in packageDirectories)
             {
-                var packageDirectory = grouping.Key;
                 foreach (var packageLibraryDirectoryName in PackageLibraryDirectoryNames)
                 {
                     var directoryName = packageLibraryDirectoryName.Replace("$(Platform)", GetRuntimeId());
