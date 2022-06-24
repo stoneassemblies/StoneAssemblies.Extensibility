@@ -14,7 +14,6 @@ namespace StoneAssemblies.Extensibility
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Runtime.Loader;
-    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
     using System.Xml;
@@ -124,12 +123,12 @@ namespace StoneAssemblies.Extensibility
                 try
                 {
                     var source = extensionSource;
-                    if (!Uri.TryCreate(source.Uri, UriKind.Absolute, out _) && Directory.Exists(source.Uri))
+                    if (!Uri.TryCreate(source.Uri, UriKind.Absolute, out _))
                     {
                         source.Uri = Path.GetFullPath(source.Uri);
                     }
 
-                    SourceRepository sourceRepository = null;
+                    SourceRepository sourceRepository;
                     if (!string.IsNullOrWhiteSpace(source.Username) && !string.IsNullOrWhiteSpace(source.Password))
                     {
                         var packageSource = new PackageSource(source.Uri)
@@ -586,6 +585,7 @@ namespace StoneAssemblies.Extensibility
                 }
             }
 
+            int count = pendingPackageIds.Count;
             foreach (var sourceRepository in this.sourceRepositories)
             {
                 if (pendingPackageIds.Count == 0)
@@ -607,15 +607,26 @@ namespace StoneAssemblies.Extensibility
                         parsed = NuGetVersion.TryParse(packageIdParts[1], out packageVersion);
                     }
 
-                    if (!parsed)
+                    try
                     {
-                        var versions = await resource.GetAllVersionsAsync(
-                                           packageId,
-                                           NullSourceCacheContext.Instance,
-                                           NullLogger.Instance,
-                                           CancellationToken.None);
+                        if (!parsed)
+                        {
+                            var versions = await resource.GetAllVersionsAsync(
+                                               packageId,
+                                               NullSourceCacheContext.Instance,
+                                               NullLogger.Instance,
+                                               CancellationToken.None);
 
-                        packageVersion = versions.AsEnumerable().LastOrDefault();
+                            packageVersion = versions.AsEnumerable().LastOrDefault();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning(
+                            ex,
+                            "Error retrieving package {PackageId} versions from source {PackageSource}",
+                            packageId,
+                            sourceRepository.PackageSource.SourceUri);
                     }
 
                     if (await this.TryLoadExtensionAsync(packageId, packageVersion))
@@ -623,6 +634,11 @@ namespace StoneAssemblies.Extensibility
                         pendingPackageIds.RemoveAt(idx);
                     }
                 }
+            }
+
+            if (pendingPackageIds.Count > 0)
+            {
+                throw new ExtensionManagerException($"Unable to download {pendingPackageIds.Count} packages out of {count}.");
             }
 
             await this.RemoveScheduleAsync();
@@ -729,24 +745,20 @@ namespace StoneAssemblies.Extensibility
         /// <returns>The task.</returns>
         private async Task EnsureDownloadPackageAsync(PackageDependency packageDependency, string destination)
         {
-            var succeeded = false;
-            do
+            try
             {
-                try
-                {
-                    Log.Information("Downloading package {PackageId}", packageDependency.Id);
+                Log.Information("Downloading package {PackageId}", packageDependency.Id);
 
-                    await this.DownloadPackageAsync(packageDependency, destination);
-                    succeeded = true;
+                await this.DownloadPackageAsync(packageDependency, destination);
 
-                    Log.Information("Downloaded package {PackageId}", packageDependency.Id);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Error downloading package {PackageId}.", packageDependency.Id);
-                }
+                Log.Information("Downloaded package {PackageId}", packageDependency.Id);
             }
-            while (!succeeded);
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error downloading package {PackageId}.", packageDependency.Id);
+
+                throw;
+            }
         }
 
         /// <summary>
@@ -764,35 +776,47 @@ namespace StoneAssemblies.Extensibility
         private async Task DownloadPackageAsync(PackageDependency package, string destination)
         {
             var succeeded = false;
-            do
+            foreach (var sourceRepository in this.sourceRepositories)
             {
-                foreach (var sourceRepository in this.sourceRepositories)
+                Log.Information(
+                    "Searching {PackageId} {PackageVersion} in source {PackageSource}",
+                    package.Id,
+                    package.VersionRange.ToString(),
+                    sourceRepository.PackageSource.SourceUri);
+
+                var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
+
+                var cacheDirectoryFolderName = Path.GetFullPath(this.settings.CacheDirectory);
+                if (!Directory.Exists(cacheDirectoryFolderName))
                 {
-                    Log.Information(
-                        "Searching {PackageId} {PackageVersion} in source {PackageSource}",
-                        package.Id,
-                        package.VersionRange.ToString(),
+                    Log.Information("Creating {Directory} directory", this.settings.CacheDirectory);
+
+                    Directory.CreateDirectory(cacheDirectoryFolderName);
+
+                    Log.Information("Created {Directory} directory", this.settings.CacheDirectory);
+                }
+
+                var packageId = package.Id;
+                IEnumerable<NuGetVersion> packageDependencyVersions = null;
+                try
+                {
+                    packageDependencyVersions = await resource.GetAllVersionsAsync(
+                                                    packageId,
+                                                    NullSourceCacheContext.Instance,
+                                                    NullLogger.Instance,
+                                                    CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(
+                        ex,
+                        "Error retrieving package {PackageId} versions from source {PackageSource}",
+                        packageId,
                         sourceRepository.PackageSource.SourceUri);
+                }
 
-                    var resource = await sourceRepository.GetResourceAsync<FindPackageByIdResource>();
-
-                    var cacheDirectoryFolderName = Path.GetFullPath(this.settings.CacheDirectory);
-                    if (!Directory.Exists(cacheDirectoryFolderName))
-                    {
-                        Log.Information("Creating {Directory} directory", this.settings.CacheDirectory);
-
-                        Directory.CreateDirectory(cacheDirectoryFolderName);
-
-                        Log.Information("Created {Directory} directory", this.settings.CacheDirectory);
-                    }
-
-                    var packageId = package.Id;
-                    var packageDependencyVersions = await resource.GetAllVersionsAsync(
-                                                        packageId,
-                                                        NullSourceCacheContext.Instance,
-                                                        NullLogger.Instance,
-                                                        CancellationToken.None);
-
+                if (packageDependencyVersions != null)
+                {
                     var packageVersion = package.VersionRange.FindBestMatch(packageDependencyVersions);
                     if (packageVersion != null)
                     {
@@ -802,41 +826,58 @@ namespace StoneAssemblies.Extensibility
                             package.VersionRange.ToString(),
                             sourceRepository.PackageSource.SourceUri);
 
-                        var packageFileName = Path.Combine(
-                            this.settings.CacheDirectory,
-                            $"{packageId}.{packageVersion.OriginalVersion}.nupkg");
-
-                        if (await resource.DownloadPackageAsync(package, packageVersion, packageFileName))
+                        var packageFileName = Path.Combine(this.settings.CacheDirectory, $"{packageId}.{packageVersion.OriginalVersion}.nupkg");
+                        do
                         {
-                            await this.DownloadDependenciesAsync(packageFileName);
+                            try
+                            {
+                                if (await resource.DownloadPackageAsync(package, packageVersion, packageFileName))
+                                {
+                                    await this.DownloadDependenciesAsync(packageFileName);
 
-                            Log.Information(
-                                "Extracting {PackageId} {PackageVersion} to {Destination}",
-                                package.Id,
-                                package.VersionRange.OriginalString,
-                                destination);
+                                    Log.Information(
+                                        "Extracting {PackageId} {PackageVersion} to {Destination}",
+                                        package.Id,
+                                        package.VersionRange.OriginalString,
+                                        destination);
 
-                            PackageFile.ExtractToDirectory(packageFileName, destination);
+                                    PackageFile.ExtractToDirectory(packageFileName, destination);
 
-                            Log.Information(
-                                "Extracted {PackageId} {PackageVersion} to {Destination}",
-                                package.Id,
-                                package.VersionRange.OriginalString,
-                                destination);
+                                    Log.Information(
+                                        "Extracted {PackageId} {PackageVersion} to {Destination}",
+                                        package.Id,
+                                        package.VersionRange.OriginalString,
+                                        destination);
 
-                            succeeded = true;
-                            break;
+                                    succeeded = true;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Error(
+                                    ex,
+                                    "Error downloading package {PackageId} {PackageVersion} in source {PackageSource}",
+                                    packageId,
+                                    package.VersionRange.OriginalString,
+                                    sourceRepository.PackageSource.SourceUri);
+                            }
                         }
-                    }
+                        while (!succeeded);
 
-                    Log.Warning(
-                        "Not found package {PackageId} {PackageVersion} in source {PackageSource} ",
-                        packageId,
-                        package.VersionRange.OriginalString,
-                        sourceRepository.PackageSource.SourceUri);
+                        break;
+                    }
                 }
+
+                Log.Warning("Package {PackageId} {PackageVersion} not found in source {PackageSource} ",
+                    packageId,
+                    package.VersionRange.OriginalString,
+                    sourceRepository.PackageSource.SourceUri);
             }
-            while (!succeeded);
+
+            if (!succeeded)
+            {
+                throw new ExtensionManagerException($"Unable to download package {package.Id} {package.VersionRange.OriginalString}");
+            }
         }
 
         /// <summary>

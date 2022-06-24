@@ -39,8 +39,6 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             [Test]
             public async Task Initializes_The_Plugin_Registering_Services_In_ServiceCollection()
             {
-                var currentDirectory = Directory.GetCurrentDirectory();
-
                 var configurationMock = new Mock<IConfiguration>();
                 var serviceCollection = new ServiceCollection();
 
@@ -60,6 +58,50 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 await extensionManager.LoadExtensionPackagesAsync();
 
                 Assert.IsNotEmpty(serviceCollection);
+            }
+
+            [Test]
+            public async Task Throws_ExtensionManagerException_When_Credentials_Are_Not_Specified_For_Private_ExtensionSource_Async()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+                settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin:1.1.0");
+
+                settings.Sources.Add(new ExtensionSource { Uri = "https://f.feedz.io/stone-assemblies/fake/nuget/index.json" });
+                settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                settings.IgnoreSchedule = true;
+                settings.IgnoreInstalledExtensionPackages = true;
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                Assert.CatchAsync<ExtensionManagerException>(() => extensionManager.LoadExtensionPackagesAsync());
+            }
+
+            [Test]
+            public void Throws_ExtensionManagerException_When_ExtensionSource_Local_Path_Is_Does_Not_Exist()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+                settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin:1.1.0");
+
+                settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local-2/" });
+                settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
+                settings.IgnoreSchedule = true;
+                settings.IgnoreInstalledExtensionPackages = true;
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                Assert.CatchAsync<ExtensionManagerException>(() => extensionManager.LoadExtensionPackagesAsync());
             }
 
             [Test]
