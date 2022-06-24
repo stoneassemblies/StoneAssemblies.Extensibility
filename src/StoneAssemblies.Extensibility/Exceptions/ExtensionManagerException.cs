@@ -7,12 +7,21 @@
 namespace StoneAssemblies.Extensibility
 {
     using System;
+    using System.Runtime.Serialization;
 
     /// <summary>
     ///     The exception manager exception.
     /// </summary>
+    [Serializable]
     public class ExtensionManagerException : Exception
     {
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="ExtensionManagerException" /> class.
+        /// </summary>
+        public ExtensionManagerException()
+        {
+        }
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="ExtensionManagerException" /> class.
         /// </summary>
@@ -24,6 +33,20 @@ namespace StoneAssemblies.Extensibility
         /// </param>
         public ExtensionManagerException(string message, Exception innerException = null)
             : base(message, innerException)
+        {
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="ExtensionManagerException" /> class.
+        /// </summary>
+        /// <param name="info">
+        ///     The info.
+        /// </param>
+        /// <param name="context">
+        ///     The context.
+        /// </param>
+        protected ExtensionManagerException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
         {
         }
     }
