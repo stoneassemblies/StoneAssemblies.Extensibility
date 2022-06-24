@@ -43,6 +43,11 @@ namespace StoneAssemblies.Extensibility
     public class ExtensionManager : IExtensionManager
     {
         /// <summary>
+        ///     The NuSpec Namespace Schema Uri.
+        /// </summary>
+        private const string NuSpecNamespaceSchemaUri = "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd";
+
+        /// <summary>
         ///     The settings
         /// </summary>
         private readonly ExtensionManagerSettings settings;
@@ -456,7 +461,6 @@ namespace StoneAssemblies.Extensibility
             }
         }
 
-
         private Dictionary<string, (string Id, string Version, string Directory)> GetInstalledExtensions()
         {
             var pluginsDirectoryPath = Path.GetFullPath(this.settings.PluginsDirectory);
@@ -466,7 +470,7 @@ namespace StoneAssemblies.Extensibility
             }
 
             var namespaceManager = new XmlNamespaceManager(new NameTable());
-            namespaceManager.AddNamespace("nuget", "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd");
+            namespaceManager.AddNamespace("nuget", NuSpecNamespaceSchemaUri);
             return Directory.EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories).Select(
                 filePath =>
                     {
@@ -491,7 +495,7 @@ namespace StoneAssemblies.Extensibility
             if (Directory.Exists(pluginsDirectoryPath))
             {
                 var namespaceManager = new XmlNamespaceManager(new NameTable());
-                namespaceManager.AddNamespace("nuget", "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd");
+                namespaceManager.AddNamespace("nuget", NuSpecNamespaceSchemaUri);
                 var cleanUpDirectories = Directory
                     .EnumerateFiles(pluginsDirectoryPath, "*.nuspec", SearchOption.AllDirectories).Select(
                         filePath =>
