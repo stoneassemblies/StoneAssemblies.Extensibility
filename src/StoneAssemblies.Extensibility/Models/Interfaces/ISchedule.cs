@@ -1,4 +1,10 @@
-﻿namespace StoneAssemblies.Extensibility
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ISchedule.cs" company="Stone Assemblies">
+// Copyright © 2021 - 2022 Stone Assemblies. All rights reserved.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace StoneAssemblies.Extensibility
 {
     using System.Collections.Generic;
 

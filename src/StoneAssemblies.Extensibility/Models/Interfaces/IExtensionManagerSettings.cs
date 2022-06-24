@@ -1,5 +1,14 @@
-﻿namespace StoneAssemblies.Extensibility
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="IExtensionManagerSettings.cs" company="Stone Assemblies">
+// Copyright © 2021 - 2022 Stone Assemblies. All rights reserved.
+// </copyright>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace StoneAssemblies.Extensibility
 {
+    /// <summary>
+    /// The ExtensionManagerSettings interface.
+    /// </summary>
     public interface IExtensionManagerSettings
     {
         /// <summary>
