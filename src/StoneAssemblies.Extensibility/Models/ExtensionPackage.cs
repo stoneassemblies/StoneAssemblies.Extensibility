@@ -51,7 +51,7 @@
         /// </returns>
         public override string ToString()
         {
-            return "${Id} (Installed version: {InstalledVersion}";
+            return $"{Id} (Installed version: {InstalledVersion}";
         }
     }
 }
