@@ -61,6 +61,49 @@ namespace StoneAssemblies.Extensibility.Tests.Services
             }
 
             [Test]
+            [Explicit]
+            public async Task It_Works_As_Expected()
+            {
+                var configurationMock = new Mock<IConfiguration>();
+                var serviceCollection = new ServiceCollection();
+
+                var settings = new ExtensionManagerSettings();
+                settings.Sources.Add(new ExtensionSource
+                {
+                    Uri = "https://f.feedz.io/[private_feed]/nuget/index.json",
+                    Username = "-",
+                    Password = "[token]",
+                    Searchable = true
+                });
+
+                settings.Sources.Add(new ExtensionSource
+                                         {
+                                             Uri = "https://api.nuget.org/v3/index.json",
+                                             Searchable = false
+                                         });
+
+                settings.IgnoreSchedule = false;
+                settings.IgnoreInstalledExtensionPackages = true;
+
+                IExtensionManager extensionManager = new ExtensionManager(
+                    serviceCollection,
+                    configurationMock.Object,
+                    settings);
+
+                await extensionManager.RemoveScheduleAsync();
+
+                // var extensionPackages = await extensionManager.GetAvailableExtensionPackagesAsync(0, 10).ToListAsync();
+
+                // TODO: call ScheduleInstallExtensionPackageAsync with the expected names and versions
+                await extensionManager.ScheduleInstallExtensionPackageAsync("[ExtensionPackageName]", "1.0.0-alpha0000");
+                
+
+                await extensionManager.LoadExtensionPackagesAsync();
+
+                // Assert.IsNotEmpty(serviceCollection);
+            }
+
+            [Test]
             public async Task Throws_ExtensionManagerException_When_Credentials_Are_Not_Specified_For_Private_ExtensionSource_Async()
             {
                 var configurationMock = new Mock<IConfiguration>();
@@ -244,7 +287,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var settings = new ExtensionManagerSettings();
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
                 settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
-                settings.IgnoreInstalledExtensionPackages  = true;
+                settings.IgnoreInstalledExtensionPackages = true;
                 settings.IgnoreSchedule = true;
 
                 IExtensionManager extensionManager = new ExtensionManager(
@@ -356,9 +399,9 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var serviceCollection = new ServiceCollection();
 
                 var settings = new ExtensionManagerSettings
-                                   {
-                                       IgnoreSchedule = true
-                                   };
+                {
+                    IgnoreSchedule = true
+                };
                 settings.Packages.Add("StoneAssemblies.Extensibility.DemoPlugin");
 
                 settings.Sources.Add(new ExtensionSource { Uri = "../../../../../output/nuget-local/" });
@@ -388,9 +431,9 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var serviceCollection = new ServiceCollection();
 
                 var settings = new ExtensionManagerSettings
-                                   {
-                                       IgnoreSchedule = true
-                                   };
+                {
+                    IgnoreSchedule = true
+                };
 
                 settings.Blacklist.Add("StoneAssemblies.Extensibility.DemoPlugin");
 
@@ -418,9 +461,9 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var serviceCollection = new ServiceCollection();
 
                 var settings = new ExtensionManagerSettings
-                                   {
-                                       IgnoreSchedule = true
-                                   };
+                {
+                    IgnoreSchedule = true
+                };
 
                 settings.Blacklist.Add(".+DemoPlugin");
 
