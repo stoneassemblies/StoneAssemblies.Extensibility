@@ -11,6 +11,7 @@ namespace StoneAssemblies.Extensibility
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Net.Http;
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Runtime.Loader;
@@ -34,6 +35,7 @@ namespace StoneAssemblies.Extensibility
     using NuGet.Versioning;
 
     using Serilog;
+    using Serilog.Core;
 
     using Formatting = Newtonsoft.Json.Formatting;
 
@@ -161,12 +163,12 @@ namespace StoneAssemblies.Extensibility
             }
         }
 
-        async Task<ExtensionPackage> IExtensionManager.GetExtensionPackageByIdAsync(string id)
+        async Task<ExtensionPackage> IExtensionManager.GetExtensionPackageByIdAsync(string packageId)
         {
             var installedPackages = this.GetInstalledExtensions();
 
             VersionInfo installedVersion = null;
-            if (installedPackages.TryGetValue(id, out var tuple))
+            if (installedPackages.TryGetValue(packageId, out var tuple))
             {
                 installedVersion = new VersionInfo(new NuGetVersion(tuple.Version));
             }
@@ -174,19 +176,31 @@ namespace StoneAssemblies.Extensibility
             foreach (var repository in this.searchableRepositories)
             {
                 var packageSearchResource = await repository.GetResourceAsync<FindPackageByIdResource>();
-                var searchResults = await packageSearchResource.GetAllVersionsAsync(
-                                        id,
-                                        NullSourceCacheContext.Instance,
-                                        NullLogger.Instance,
-                                        CancellationToken.None);
-                var versionInfos = searchResults.Select(version => new VersionInfo(version)).ToList();
-                if (versionInfos.Count > 0)
+                IEnumerable<NuGetVersion> searchResults = null;
+
+                try
                 {
-                    return new ExtensionPackage(id, versionInfos, installedVersion);
+                    searchResults = await packageSearchResource.GetAllVersionsAsync(
+                                        packageId,
+                                        NullSourceCacheContext.Instance,
+                                        NuGetLogger.Instance, 
+                                        CancellationToken.None);
+
+
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(ex, "Error retrieving all versions from package {PackageId} from repository {Uri}", packageId, repository.PackageSource.TrySourceAsUri);
+                }
+
+                var versionInfos = searchResults?.Select(version => new VersionInfo(version)).ToList();
+                if (versionInfos is { Count: > 0 })
+                {
+                    return new ExtensionPackage(packageId, versionInfos, installedVersion);
                 }
             }
 
-            return new ExtensionPackage(id, null, installedVersion);
+            return new ExtensionPackage(packageId, null, installedVersion);
         }
 
         /// <inheritdoc />
@@ -420,35 +434,51 @@ namespace StoneAssemblies.Extensibility
             {
                 var packageSearchResource = await repository.GetResourceAsync<PackageSearchResource>();
                 var searchFilter = new SearchFilter(true);
-                var searchResults = await packageSearchResource.SearchAsync(
+                IEnumerable<IPackageSearchMetadata> searchResults = null;
+                try
+                {
+                    searchResults = await packageSearchResource.SearchAsync(
                                         "",
                                         searchFilter,
                                         skip,
                                         take,
-                                        NullLogger.Instance,
+                                        NuGetLogger.Instance,
                                         CancellationToken.None);
-
-                foreach (var packageSearchMetadata in searchResults)
-                {
-                    if (this.settings.IsInBlacklist(packageSearchMetadata.Identity.Id))
-                    {
-                        continue;
-                    }
-
-                    var versionInfos = (await packageSearchMetadata.GetVersionsAsync()).ToList();
-                    VersionInfo installedVersion = null;
-                    if (installedPackages.TryGetValue(packageSearchMetadata.Identity.Id, out var installedPackage))
-                    {
-                        installedVersion = versionInfos?.FirstOrDefault(
-                            info => info.Version.OriginalVersion == installedPackage.Version);
-                        installedPackages.Remove(packageSearchMetadata.Identity.Id);
-                    }
-
-                    yield return new ExtensionPackage(
-                        packageSearchMetadata.Identity.Id,
-                        versionInfos,
-                        installedVersion);
                 }
+                catch (FatalProtocolException ex)
+                {
+                    Log.Warning(
+                        ex,
+                        "Error getting available extension packages from repository '{Uri}'",
+                        repository.PackageSource.TrySourceAsUri);
+                }
+
+                if (searchResults != null)
+                {
+                    foreach (var packageSearchMetadata in searchResults)
+                    {
+                        if (this.settings.IsInBlacklist(packageSearchMetadata.Identity.Id))
+                        {
+                            continue;
+                        }
+
+                        var versionInfos = (await packageSearchMetadata.GetVersionsAsync()).ToList();
+                        VersionInfo installedVersion = null;
+                        if (installedPackages.TryGetValue(packageSearchMetadata.Identity.Id, out var installedPackage))
+                        {
+                            installedVersion = versionInfos?.FirstOrDefault(
+                                info => info.Version.OriginalVersion == installedPackage.Version);
+                            installedPackages.Remove(packageSearchMetadata.Identity.Id);
+                        }
+
+                        yield return new ExtensionPackage(
+                            packageSearchMetadata.Identity.Id,
+                            versionInfos,
+                            installedVersion);
+                    }
+
+                }
+
             }
 
             foreach (var installedPackage in installedPackages)
