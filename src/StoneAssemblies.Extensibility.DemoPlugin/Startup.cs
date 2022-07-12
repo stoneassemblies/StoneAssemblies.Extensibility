@@ -55,6 +55,8 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// </param>
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
+            var error = new Microsoft.Graph.Error();
+
             var implementationInstance = new SqlConnection();
 
             //implementationInstance.ConnectionString =
