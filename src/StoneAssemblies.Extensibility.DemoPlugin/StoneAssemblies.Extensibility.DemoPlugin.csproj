@@ -5,6 +5,7 @@
 
   <ItemGroup>
 	  <PackageReference Include="Microsoft.Data.SqlClient" Version="4.0.1" />
+	  <PackageReference Include="Microsoft.Graph.Core" Version="2.0.9" />
   </ItemGroup>
 
   <ItemGroup>

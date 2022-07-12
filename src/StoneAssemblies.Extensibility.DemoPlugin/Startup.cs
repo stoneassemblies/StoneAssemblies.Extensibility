@@ -12,6 +12,7 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
     using Microsoft.Data.SqlClient;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Graph.Core.Requests;
 
     /// <summary>
     ///     The plugin startup.
@@ -55,6 +56,8 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// </param>
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
+            var type = typeof(BatchRequest);
+
             var implementationInstance = new SqlConnection();
 
             //implementationInstance.ConnectionString =
