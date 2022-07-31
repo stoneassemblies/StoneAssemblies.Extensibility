@@ -773,26 +773,68 @@ namespace StoneAssemblies.Extensibility
         /// <summary>
         ///     Ensures download package.
         /// </summary>
-        /// <param name="packageDependency">
+        /// <param name="package">
         ///     The package dependency
         /// </param>
         /// <param name="destination">
         ///     The destination.
         /// </param>
         /// <returns>The task.</returns>
-        private async Task EnsureDownloadPackageAsync(PackageDependency packageDependency, string destination)
+        private async Task EnsureDownloadPackageAsync(PackageDependency package, string destination)
         {
+            var packageFileName = Path.Combine(this.settings.CacheDirectory, $"{package.Id}.{package.VersionRange.OriginalString}.nupkg");
+            if (File.Exists(packageFileName))
+            {
+                Log.Information("Package {PackageId} {PackageVersion} is already in local cache", package.Id, package.VersionRange.OriginalString);
+
+                if (Directory.Exists(Path.Combine(destination, $"{package.Id}.{package.VersionRange.OriginalString}")))
+                {
+                    Log.Information("Package {PackageId} {PackageVersion} is already uncompressed in {Destination}", package.Id, package.VersionRange.OriginalString, destination);
+
+                    // TODO: Checks uncompressed package integrity?
+
+                    return;
+                }
+
+                try
+                {
+                    Log.Information(
+                        "Extracting {PackageId} {PackageVersion} to {Destination}",
+                        package.Id,
+                        package.VersionRange.OriginalString,
+                        destination);
+
+                    PackageFile.ExtractToDirectory(packageFileName, destination);
+
+                    Log.Information(
+                        "Extracted {PackageId} {PackageVersion} to {Destination}",
+                        package.Id,
+                        package.VersionRange.OriginalString,
+                        destination);
+
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning(
+                        ex,
+                        "Package {PackageId} {PackageVersion} in local cache looks corrupted, will be download again.",
+                        package.Id,
+                        package.VersionRange.OriginalString);
+                }
+            }
+
             try
             {
-                Log.Information("Downloading package {PackageId}", packageDependency.Id);
+                Log.Information("Downloading package {PackageId}", package.Id);
 
-                await this.DownloadPackageAsync(packageDependency, destination);
+                await this.DownloadPackageAsync(package, destination);
 
-                Log.Information("Downloaded package {PackageId}", packageDependency.Id);
+                Log.Information("Downloaded package {PackageId}", package.Id);
             }
             catch (Exception ex)
             {
-                Log.Error(ex, "Error downloading package {PackageId}.", packageDependency.Id);
+                Log.Error(ex, "Error downloading package {PackageId}.", package.Id);
 
                 throw;
             }
