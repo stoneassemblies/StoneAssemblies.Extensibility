@@ -66,16 +66,12 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// </param>
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
-            var error = new Microsoft.Graph.Error();
+            _ = new Microsoft.Graph.Error();
+            _ = new AppDbContext(new DbContextOptions<AppDbContext>());
 
             var implementationInstance = new SqlConnection();
 
-            //implementationInstance.ConnectionString =
-            //    "Server=localhost;Database=Users;User Id=sa;Password=Password123!;TrustServerCertificate=true";
-            //implementationInstance.Open();
-
             serviceCollection.AddSingleton(implementationInstance);
-            serviceCollection.AddDbContext<AppDbContext>(options => options.UseNpgsql());
         }
 
         /// <summary>
