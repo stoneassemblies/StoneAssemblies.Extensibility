@@ -10,14 +10,21 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
     using System.Collections;
 
     using Microsoft.Data.SqlClient;
+    using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Logging;
 
     /// <summary>
     ///     The plugin startup.
     /// </summary>
     public class Startup
     {
+        /// <summary>
+        /// The logger.
+        /// </summary>
+        private readonly ILogger<Startup> logger;
+
         /// <summary>
         ///     The configuration.
         /// </summary>
@@ -35,14 +42,18 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// <summary>
         ///     Initializes a new instance of the <see cref="Startup" /> class.
         /// </summary>
+        /// <param name="logger">
+        ///     The logger. 
+        /// </param>
         /// <param name="configuration">
         ///     The configuration.
         /// </param>
         /// <param name="extensionManager">
         ///     The extension manager.
         /// </param>
-        public Startup(IConfiguration configuration, IExtensionManager extensionManager)
+        public Startup(ILogger<Startup> logger, IConfiguration configuration, IExtensionManager extensionManager)
         {
+            this.logger = logger;
             this.configuration = configuration;
             this.extensionManager = extensionManager;
         }
@@ -64,6 +75,7 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
             //implementationInstance.Open();
 
             serviceCollection.AddSingleton(implementationInstance);
+            serviceCollection.AddDbContext<AppDbContext>(options => options.UseNpgsql());
         }
 
         /// <summary>

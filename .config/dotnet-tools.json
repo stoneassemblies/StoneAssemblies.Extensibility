@@ -3,13 +3,13 @@
   "isRoot": true,
   "tools": {
     "cake.tool": {
-      "version": "2.2.0",
+      "version": "3.0.0",
       "commands": [
         "dotnet-cake"
       ]
     },
     "gitversion.tool": {
-      "version": "5.10.1",
+      "version": "5.12.0",
       "commands": [
         "dotnet-gitversion"
       ]
@@ -24,6 +24,12 @@
       "version": "5.5.3",
       "commands": [
         "dotnet-sonarscanner"
+      ]
+    },
+    "swashbuckle.aspnetcore.cli": {
+      "version": "6.5.0",
+      "commands": [
+        "swagger"
       ]
     }
   }

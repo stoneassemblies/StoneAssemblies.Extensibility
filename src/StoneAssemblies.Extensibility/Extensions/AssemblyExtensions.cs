@@ -13,6 +13,7 @@ namespace StoneAssemblies.Extensibility
 
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Logging;
 
     using Serilog;
 
@@ -22,20 +23,34 @@ namespace StoneAssemblies.Extensibility
     public static class AssemblyExtensions
     {
         /// <summary>
-        ///     The initialize extension.
+        /// The create logger method info.
+        /// </summary>
+        private static readonly MethodInfo CreateLoggerMethodInfo = typeof(LoggerFactoryExtensions).GetMethods().First(info => info.Name == nameof(LoggerFactoryExtensions.CreateLogger) && info.GetGenericArguments().Length == 1);
+
+        /// <summary>
+        /// The logger factory.
+        /// </summary>
+        private static readonly ILoggerFactory LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder => builder.AddSerilog());
+
+
+        /// <summary>
+        /// The initialize extension.
         /// </summary>
         /// <param name="assembly">
-        ///     The assembly.
+        /// The assembly.
         /// </param>
         /// <param name="serviceCollection">
-        ///     The service collection.
+        /// The service collection.
         /// </param>
         /// <param name="configuration">
-        ///     The configuration.
+        /// The configuration.
         /// </param>
         /// <param name="extensionManager">
-        ///     The extension manager.
+        /// The extension manager.
         /// </param>
+        /// <returns>
+        /// The startup <see cref="object"/>.
+        /// </returns>
         public static object InitializeExtension(
             this Assembly assembly,
             IServiceCollection serviceCollection,
@@ -100,11 +115,12 @@ namespace StoneAssemblies.Extensibility
             IConfiguration configuration,
             IExtensionManager extensionManager)
         {
+
             object startup = null;
             var startupType = assembly.GetTypes().FirstOrDefault(type => type.Name == "Startup");
             if (startupType != null)
             {
-                object[] availableParameters = { configuration, extensionManager };
+                object[] availableParameters = { configuration, extensionManager, CreateLoggerMethodInfo.MakeGenericMethod(startupType).Invoke(typeof(LoggerFactoryExtensions), new object[] { LoggerFactory }) };
                 foreach (var constructorInfo in startupType.GetConstructors())
                 {
                     var parameters = new List<object>();
