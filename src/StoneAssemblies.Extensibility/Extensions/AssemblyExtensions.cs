@@ -7,6 +7,7 @@
 namespace StoneAssemblies.Extensibility
 {
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
     using System.Net.Mime;
@@ -32,6 +33,11 @@ namespace StoneAssemblies.Extensibility
         /// The logger factory.
         /// </summary>
         private static readonly ILoggerFactory LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder => builder.AddSerilog());
+
+        /// <summary>
+        /// The assembly cache.
+        /// </summary>
+        private static readonly ConcurrentDictionary<string, Assembly> AssemblyCache = new ConcurrentDictionary<string, Assembly>();
 
         /// <summary>
         /// The initialize extension.
@@ -72,12 +78,36 @@ namespace StoneAssemblies.Extensibility
         /// <param name="assembly">
         /// The assembly.
         /// </param>
+        /// <param name="cache">
+        /// The cache.
+        /// </param>
         /// <returns>
         /// The <see cref="IEnumerable{Assembly}"/>.
         /// </returns>
-        public static IEnumerable<Assembly> EnumReferencedAssemblies(this Assembly assembly)
+        public static IEnumerable<Assembly> EnumReferences(this Assembly assembly, HashSet<string> cache = null)
         {
-            return assembly.EnumReferencedAssemblies(new HashSet<string>());
+            cache ??= new HashSet<string>();
+
+            foreach (var referencedAssemblyName in assembly.GetReferencedAssemblies())
+            {
+                var referencedAssembly = AssemblyCache.GetOrAdd(
+                    referencedAssemblyName.Name,
+                    s => AppDomain.CurrentDomain.GetAssemblies()
+                             .FirstOrDefault(a => a.GetName().Name == referencedAssemblyName.Name)
+                         ?? Assembly.Load(referencedAssemblyName));
+
+                var assemblyName = referencedAssembly.GetName().Name;
+                if (!cache.Contains(assemblyName))
+                {
+                    cache.Add(assemblyName);
+                    yield return referencedAssembly;
+                }
+
+                foreach (var reference in referencedAssembly.EnumReferences(cache))
+                {
+                    yield return reference;
+                }
+            }
         }
 
         /// <summary>
@@ -153,40 +183,6 @@ namespace StoneAssemblies.Extensibility
             }
 
             return startup;
-        }
-
-        /// <summary>
-        /// Enum referenced assemblies.
-        /// </summary>
-        /// <param name="assembly">
-        /// The assembly.
-        /// </param>
-        /// <param name="loaded">
-        /// The loaded.
-        /// </param>
-        /// <returns>
-        /// The <see cref="IEnumerable{Assembly}"/>.
-        /// </returns>
-        private static IEnumerable<Assembly> EnumReferencedAssemblies(this Assembly assembly, HashSet<string> loaded)
-        {
-            foreach (var referencedAssemblyName in assembly.GetReferencedAssemblies())
-            {
-                var loadedAssembly = Assembly.Load(referencedAssemblyName);
-                var assemblyName = loadedAssembly.GetName().Name;
-
-                if (!loaded.Contains(assemblyName))
-                {
-                    loaded.Add(assemblyName);
-                    yield return loadedAssembly;
-                }
-                else
-                {
-                    foreach (var loadedAssemblyReferencedAssembly in loadedAssembly.EnumReferencedAssemblies(loaded))
-                    {
-                        yield return loadedAssemblyReferencedAssembly;
-                    }
-                }
-            }
         }
     }
 }

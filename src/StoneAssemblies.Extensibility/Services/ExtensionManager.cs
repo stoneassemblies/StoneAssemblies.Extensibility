@@ -688,9 +688,11 @@ namespace StoneAssemblies.Extensibility
             if (settings.InitializePluginDependencies)
             {
                 assemblies = new List<Assembly>();
+
+                var cache = new HashSet<string>();
                 foreach (var extension in this.extensions)
                 {
-                    assemblies.AddRange(extension.EnumReferencedAssemblies());
+                    assemblies.AddRange(extension.EnumReferences(cache));
                 }
             }
 
