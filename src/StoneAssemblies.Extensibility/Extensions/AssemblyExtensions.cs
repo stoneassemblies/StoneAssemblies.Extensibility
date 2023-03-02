@@ -9,6 +9,7 @@ namespace StoneAssemblies.Extensibility
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net.Mime;
     using System.Reflection;
 
     using Microsoft.Extensions.Configuration;
@@ -31,7 +32,6 @@ namespace StoneAssemblies.Extensibility
         /// The logger factory.
         /// </summary>
         private static readonly ILoggerFactory LoggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder => builder.AddSerilog());
-
 
         /// <summary>
         /// The initialize extension.
@@ -64,6 +64,20 @@ namespace StoneAssemblies.Extensibility
             }
 
             return startup;
+        }
+
+        /// <summary>
+        /// Enum referenced assemblies.
+        /// </summary>
+        /// <param name="assembly">
+        /// The assembly.
+        /// </param>
+        /// <returns>
+        /// The <see cref="IEnumerable{Assembly}"/>.
+        /// </returns>
+        public static IEnumerable<Assembly> EnumReferencedAssemblies(this Assembly assembly)
+        {
+            return assembly.EnumReferencedAssemblies(new HashSet<string>());
         }
 
         /// <summary>
@@ -115,7 +129,6 @@ namespace StoneAssemblies.Extensibility
             IConfiguration configuration,
             IExtensionManager extensionManager)
         {
-
             object startup = null;
             var startupType = assembly.GetTypes().FirstOrDefault(type => type.Name == "Startup");
             if (startupType != null)
@@ -140,6 +153,40 @@ namespace StoneAssemblies.Extensibility
             }
 
             return startup;
+        }
+
+        /// <summary>
+        /// Enum referenced assemblies.
+        /// </summary>
+        /// <param name="assembly">
+        /// The assembly.
+        /// </param>
+        /// <param name="loaded">
+        /// The loaded.
+        /// </param>
+        /// <returns>
+        /// The <see cref="IEnumerable{Assembly}"/>.
+        /// </returns>
+        private static IEnumerable<Assembly> EnumReferencedAssemblies(this Assembly assembly, HashSet<string> loaded)
+        {
+            foreach (var referencedAssemblyName in assembly.GetReferencedAssemblies())
+            {
+                var loadedAssembly = Assembly.Load(referencedAssemblyName);
+                var assemblyName = loadedAssembly.GetName().Name;
+
+                if (!loaded.Contains(assemblyName))
+                {
+                    loaded.Add(assemblyName);
+                    yield return loadedAssembly;
+                }
+                else
+                {
+                    foreach (var loadedAssemblyReferencedAssembly in loadedAssembly.EnumReferencedAssemblies(loaded))
+                    {
+                        yield return loadedAssemblyReferencedAssembly;
+                    }
+                }
+            }
         }
     }
 }

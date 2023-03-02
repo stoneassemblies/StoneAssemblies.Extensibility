@@ -30,6 +30,7 @@ namespace StoneAssemblies.Extensibility
     using NuGet.Configuration;
     using NuGet.Packaging;
     using NuGet.Packaging.Core;
+    using NuGet.Packaging.Signing;
     using NuGet.Protocol;
     using NuGet.Protocol.Core.Types;
     using NuGet.Versioning;
@@ -183,7 +184,7 @@ namespace StoneAssemblies.Extensibility
                     searchResults = await packageSearchResource.GetAllVersionsAsync(
                                         packageId,
                                         NullSourceCacheContext.Instance,
-                                        NuGetLogger.Instance, 
+                                        NuGetLogger.Instance,
                                         CancellationToken.None);
 
 
@@ -683,16 +684,30 @@ namespace StoneAssemblies.Extensibility
         /// </summary>
         private void InitializeExtensions()
         {
-            foreach (var extension in this.extensions)
+            var assemblies = new List<Assembly>();
+            if (settings.InitializePluginDependencies)
+            {
+                assemblies = new List<Assembly>();
+                foreach (var extension in this.extensions)
+                {
+                    assemblies.AddRange(extension.EnumReferencedAssemblies());
+                }
+            }
+
+            assemblies.AddRange(this.extensions);
+            foreach (var assembly in assemblies)
             {
                 try
                 {
-                    var startup = extension.InitializeExtension(this.serviceCollection, this.configuration, this);
-                    this.startupObjects.Add(startup);
+                    var startup = assembly.InitializeExtension(this.serviceCollection, this.configuration, this);
+                    if (startup is not null)
+                    {
+                        this.startupObjects.Add(startup);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, "Error initializing extension {Name}", extension.GetName().Name);
+                    Log.Error(ex, "Error initializing extension {Name}", assembly.GetName().Name);
                 }
             }
         }

@@ -39,12 +39,17 @@ namespace StoneAssemblies.Extensibility
         public List<ExtensionSource> Sources { get; } = new List<ExtensionSource>();
 
         /// <summary>
-        ///     Gets or set a value to indicates whether the extension manager will initialize the plugins.
+        ///     Gets or sets a value indicating whether the extension manager will initialize the plugins.
         /// </summary>
         public bool Initialize { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether skip schedule.
+        ///     Gets or sets a value indicating whether the extension manager will initialize also the plugins dependencies.
+        /// </summary>
+        public bool InitializePluginDependencies { get; set; } = true;
+
+        /// <summary>
+        ///     Gets or sets a value indicating whether skip schedule.
         /// </summary>
         public bool IgnoreSchedule { get; set; } = false;
 

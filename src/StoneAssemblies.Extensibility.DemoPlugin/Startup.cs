@@ -14,7 +14,7 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
-
+    
     /// <summary>
     ///     The plugin startup.
     /// </summary>
@@ -66,7 +66,7 @@ namespace StoneAssemblies.Extensibility.DemoPlugin
         /// </param>
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
-            _ = new Microsoft.Graph.Error();
+            _ = new Microsoft.Graph.ServiceException(string.Empty);
             _ = new AppDbContext(new DbContextOptions<AppDbContext>());
 
             var implementationInstance = new SqlConnection();

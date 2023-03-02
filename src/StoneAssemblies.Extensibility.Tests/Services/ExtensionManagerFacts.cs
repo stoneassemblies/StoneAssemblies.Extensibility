@@ -27,6 +27,9 @@ namespace StoneAssemblies.Extensibility.Tests.Services
     [TestFixture]
     public class ExtensionManagerFacts
     {
+        /// <summary>
+        /// The load extension packages async method.
+        /// </summary>
         [TestFixture]
         public class The_LoadExtensionPackagesAsync_Method
         {
@@ -60,6 +63,12 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 Assert.IsNotEmpty(serviceCollection);
             }
 
+            /// <summary>
+            /// Throws extension manager exception when credentials are not specified for private extension source async.
+            /// </summary>
+            /// <returns>
+            /// The <see cref="Task"/>.
+            /// </returns>
             [Test]
             public async Task Throws_ExtensionManagerException_When_Credentials_Are_Not_Specified_For_Private_ExtensionSource_Async()
             {

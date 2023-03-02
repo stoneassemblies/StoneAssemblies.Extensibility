@@ -120,15 +120,16 @@ Task("Build")
       CleanDirectory(packageOutputDirectory);
 
       var settings = new DotNetPackSettings
-        {
+      {
             Configuration = buildConfiguration,
             OutputDirectory = packageOutputDirectory,
             ArgumentCustomization = args => args
                 .Append($"/p:PackageVersion={NuGetVersionV2}")
                 .Append($"/p:Version={NuGetVersionV2}")
-        };
+      };
 
-        DotNetPack("src/StoneAssemblies.Extensibility.DemoPlugin/StoneAssemblies.Extensibility.DemoPlugin.csproj", settings);
+      DotNetPack("src/StoneAssemblies.Extensibility.DemoPlugin/StoneAssemblies.Extensibility.DemoPlugin.csproj", settings);
+      DotNetPack("src/StoneAssemblies.Extensibility.DemoPlugin.Dependency/StoneAssemblies.Extensibility.DemoPlugin.Dependency.csproj", settings);
   }); 
 
 Task("Test")

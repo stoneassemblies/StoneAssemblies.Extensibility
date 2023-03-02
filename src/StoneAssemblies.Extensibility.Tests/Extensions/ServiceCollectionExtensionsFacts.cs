@@ -28,7 +28,9 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
             ///     Initializes the plugin registering services in service collection.
             /// </summary>
             [Test]
-            public void Initializes_The_Plugin_Registering_Services_In_ServiceCollection()
+            [TestCase(false, 2)]
+            [TestCase(true, 5)]
+            public void Initializes_The_Plugin_Registering_Services_In_ServiceCollection(bool initializePluginDependencies, int expectedRegisteredServiceCount)
             {
                 var configurationMock = new Mock<IConfiguration>();
                 var serviceCollection = new ServiceCollection();
@@ -42,9 +44,10 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                             settings.Sources.Add(new ExtensionSource { Uri = "https://api.nuget.org/v3/index.json" });
                             settings.IgnoreSchedule = true;
                             settings.IgnoreInstalledExtensionPackages = true;
+                            settings.InitializePluginDependencies = initializePluginDependencies;
                         });
 
-                Assert.AreEqual(2, serviceCollection.Count);
+                Assert.AreEqual(expectedRegisteredServiceCount, serviceCollection.Count);
             }
 
             /// <summary>
