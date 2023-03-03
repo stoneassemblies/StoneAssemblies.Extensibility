@@ -10,12 +10,13 @@ namespace StoneAssemblies.Extensibility
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Net.Mime;
     using System.Reflection;
 
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Logging;
+
+    using NuGet.Packaging;
 
     using Serilog;
 
@@ -88,26 +89,46 @@ namespace StoneAssemblies.Extensibility
         {
             cache ??= new HashSet<string>();
 
+            if (cache.Contains(assembly.GetName().Name))
+            {
+                yield break;
+            }
+
             foreach (var referencedAssemblyName in assembly.GetReferencedAssemblies())
             {
+                var assemblyName = referencedAssemblyName.Name;
                 var referencedAssembly = AssemblyCache.GetOrAdd(
-                    referencedAssemblyName.Name,
+                    assemblyName,
                     s => AppDomain.CurrentDomain.GetAssemblies()
-                             .FirstOrDefault(a => a.GetName().Name == referencedAssemblyName.Name)
+                             .FirstOrDefault(a => a.GetName().Name == assemblyName)
                          ?? Assembly.Load(referencedAssemblyName));
 
-                var assemblyName = referencedAssembly.GetName().Name;
-                if (!cache.Contains(assemblyName))
+                if (referencedAssembly is not null && !cache.Contains(assemblyName))
                 {
                     cache.Add(assemblyName);
                     yield return referencedAssembly;
-                }
 
-                foreach (var reference in referencedAssembly.EnumReferences(cache))
-                {
-                    yield return reference;
+                    foreach (var reference in referencedAssembly.EnumReferences(cache))
+                    {
+                        yield return reference;
+                    }
                 }
             }
+        }
+
+        /// <summary>
+        /// Enum referenced assemblies.
+        /// </summary>
+        /// <param name="assemblies">
+        /// The assembly.
+        /// </param>
+        /// <returns>
+        /// The <see cref="IEnumerable{Assembly}"/>.
+        /// </returns>
+        public static IEnumerable<Assembly> EnumReferences(this IEnumerable<Assembly> assemblies)
+        {
+            var cache = new HashSet<string>();
+            return assemblies.SelectMany(a => a.EnumReferences(cache));
         }
 
         /// <summary>

@@ -38,6 +38,22 @@
             }
 
             [Test]
+            public void Returns_Distinc_Assemblies()
+            {
+                var assemblies = new[]
+                                     {
+                                         typeof(AssemblyExtensions).Assembly, typeof(AssemblyExtensions).Assembly
+                                     };
+
+                var references = assemblies.EnumReferences().ToList();
+
+                var hashSet = new HashSet<string>();
+                Assert.That(
+                    references,
+                    Is.EquivalentTo(assemblies.SelectMany(assembly => assembly.EnumReferences(hashSet))));
+            }
+
+            [Test]
             public void Returns_Duplicate_Assemblies_When_Cross_Assembly_Cache_Is_Not_Used()
             {
                 var assemblies = new List<Assembly>();

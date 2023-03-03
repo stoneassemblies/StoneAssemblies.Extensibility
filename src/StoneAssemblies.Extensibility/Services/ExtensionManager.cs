@@ -687,16 +687,18 @@ namespace StoneAssemblies.Extensibility
             var assemblies = new List<Assembly>();
             if (settings.InitializePluginDependencies)
             {
-                assemblies = new List<Assembly>();
+                assemblies = this.extensions.EnumReferences().ToList();
+            }
 
-                var cache = new HashSet<string>();
-                foreach (var extension in this.extensions)
+            foreach (var extension in this.extensions)
+            {
+                var assemblyName = extension.GetName().Name!;
+                if (assemblies.All(assembly => assembly.GetName().Name != assemblyName))
                 {
-                    assemblies.AddRange(extension.EnumReferences(cache));
+                    assemblies.Add(extension);
                 }
             }
 
-            assemblies.AddRange(this.extensions);
             foreach (var assembly in assemblies)
             {
                 try
