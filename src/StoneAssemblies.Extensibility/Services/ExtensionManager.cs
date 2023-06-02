@@ -8,10 +8,10 @@ namespace StoneAssemblies.Extensibility
 {
     using System;
     using System.Collections;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using System.Net.Http;
     using System.Reflection;
     using System.Runtime.InteropServices;
     using System.Runtime.Loader;
@@ -30,13 +30,11 @@ namespace StoneAssemblies.Extensibility
     using NuGet.Configuration;
     using NuGet.Packaging;
     using NuGet.Packaging.Core;
-    using NuGet.Packaging.Signing;
     using NuGet.Protocol;
     using NuGet.Protocol.Core.Types;
     using NuGet.Versioning;
 
     using Serilog;
-    using Serilog.Core;
 
     using Formatting = Newtonsoft.Json.Formatting;
 
@@ -102,7 +100,12 @@ namespace StoneAssemblies.Extensibility
         /// <summary>
         ///     The searchable repositories.
         /// </summary>
-        private readonly List<SourceRepository> searchableRepositories = new List<SourceRepository>();
+        private readonly List<SourceRepository> searchableRepositories = new List<SourceRepository>();   
+        
+        /// <summary>
+        ///     The assemblies cache.
+        /// </summary>
+        private readonly ConcurrentDictionary<string, Assembly> assembliesCache = new ConcurrentDictionary<string, Assembly>();
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="ExtensionManager" /> class.
@@ -772,8 +775,12 @@ namespace StoneAssemblies.Extensibility
             foreach (var packageDependency in packageDependencies)
             {
                 var packageName = packageDependency.Id;
-                var assembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(
-                    a => packageName.Equals(a.GetName()?.Name, StringComparison.InvariantCultureIgnoreCase));
+
+                var assembly = this.assembliesCache.GetOrAdd(
+                    packageName,
+                    _ => AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(
+                        a => packageName.Equals(a.GetName()?.Name, StringComparison.InvariantCultureIgnoreCase)));
+
                 if (assembly == null)
                 {
                     await this.EnsureDownloadPackageAsync(

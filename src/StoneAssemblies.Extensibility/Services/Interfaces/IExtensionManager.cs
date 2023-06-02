@@ -53,13 +53,13 @@ namespace StoneAssemblies.Extensibility
         /// <summary>
         ///     Gets extension package by id async.
         /// </summary>
-        /// <param name="id">
+        /// <param name="packageId">
         ///     The id.
         /// </param>
         /// <returns>
         ///     The <see cref="Task" />.
         /// </returns>
-        Task<ExtensionPackage> GetExtensionPackageByIdAsync(string id);
+        Task<ExtensionPackage> GetExtensionPackageByIdAsync(string packageId);
 
         /// <summary>
         ///     Gets the extension assemblies.
