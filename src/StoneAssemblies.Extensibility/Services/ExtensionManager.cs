@@ -64,6 +64,8 @@ namespace StoneAssemblies.Extensibility
         private static readonly string[] TargetFrameworkDependencies =
         {
 #if NET5_0_OR_GREATER
+            ".NETCoreApp,Version=v8.0",
+            ".NETCoreApp,Version=v7.0",
             ".NETCoreApp,Version=v6.0",
             ".NETCoreApp,Version=v5.0",
 #endif

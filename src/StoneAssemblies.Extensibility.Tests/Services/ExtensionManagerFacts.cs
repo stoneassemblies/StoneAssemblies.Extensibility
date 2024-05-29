@@ -20,6 +20,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
     using Moq;
 
     using NUnit.Framework;
+    using NUnit.Framework.Constraints;
 
     /// <summary>
     ///     The extension manager tests.
@@ -60,7 +61,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.LoadExtensionPackagesAsync();
 
-                Assert.IsNotEmpty(serviceCollection);
+                Assert.That(serviceCollection, Is.Not.Empty);
             }
 
             /// <summary>
@@ -147,7 +148,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager2.LoadExtensionPackagesAsync();
 
-                Assert.IsNotEmpty(serviceCollection2);
+                Assert.That(serviceCollection2, Is.Not.Empty);
             }
 
             [Test]
@@ -175,7 +176,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.LoadExtensionPackagesAsync();
 
-                Assert.IsNotEmpty(serviceCollection);
+                Assert.That(serviceCollection, Is.Not.Empty);
             }
 
 
@@ -205,7 +206,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.LoadExtensionPackagesAsync();
 
-                Assert.IsNotEmpty(serviceCollection);
+                Assert.That(serviceCollection, Is.Not.Empty);
             }
 
             /// <summary>
@@ -235,7 +236,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.LoadExtensionPackagesAsync();
 
-                Assert.AreEqual(1, extensionManager.GetExtensionPackageAssemblies().Count());
+                Assert.That(extensionManager.GetExtensionPackageAssemblies().Count(), Is.EqualTo(1));
             }
 
             /// <summary>
@@ -263,7 +264,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.LoadExtensionPackagesAsync();
 
-                Assert.IsEmpty(serviceCollection);
+                Assert.That(serviceCollection, Is.Empty);
             }
         }
 
@@ -296,8 +297,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 extensionManager.Configure(new Action<string>(s => { called = true; }), list);
 
-                Assert.True(called);
-                Assert.IsNotEmpty(list);
+                Assert.That(called, Is.True);
+                Assert.That(list, Is.Not.Empty);
             }
 
             [Test]
@@ -325,8 +326,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 extensionManager.Configure(null, new Action<string>(s => { called = true; }), null, list, null);
 
-                Assert.True(called);
-                Assert.IsNotEmpty(list);
+                Assert.That(called, Is.True);
+                Assert.That(list, Is.Not.Empty);
             }
 
             [Test]
@@ -351,7 +352,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var called = false;
                 extensionManager.Configure(new Action<string>(s => { called = true; }));
 
-                Assert.False(called);
+                Assert.That(called, Is.False);
             }
         }
 
@@ -386,8 +387,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var extensionPackage = extensionPackages.FirstOrDefault(
                     package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.NotNull(extensionPackage?.InstalledVersion);
-                Assert.NotNull(extensionPackage?.Versions);
+                Assert.That(extensionPackage?.InstalledVersion, Is.Not.Null);
+                Assert.That(extensionPackage?.Versions, Is.Not.Null);
             }
 
             [Test]
@@ -417,7 +418,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var extensionPackage = extensionPackages.FirstOrDefault(
                     package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.IsNull(extensionPackage?.Versions);
+                Assert.That(extensionPackage?.Versions, Is.Null);
             }
 
             [Test]
@@ -447,7 +448,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var extensionPackage = extensionPackages.FirstOrDefault(
                     package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.IsNull(extensionPackage?.Versions);
+                Assert.That(extensionPackage?.Versions, Is.Null);
             }
 
             [Test]
@@ -484,8 +485,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var extensionPackage = extensionPackages.FirstOrDefault(
                     package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.NotNull(extensionPackage?.InstalledVersion);
-                Assert.IsNull(extensionPackage?.Versions);
+                Assert.That(extensionPackage?.InstalledVersion, Is.Not.Null);
+                Assert.That(extensionPackage?.Versions, Is.Null);
             }
         }
 
@@ -513,8 +514,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 var (scheduled, version) = await extensionManager.IsExtensionPackageScheduledToInstallAsync("StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.IsTrue(scheduled);
-                Assert.AreEqual("1.0.0-alpha0104", version);
+                Assert.That(scheduled, Is.True);
+                Assert.That(version, Is.EqualTo("1.0.0-alpha0104"));
             }
 
             [Test]
@@ -542,7 +543,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 var schedule = await extensionManager.GetScheduleAsync();
 
-                Assert.AreEqual(1, schedule.Install.Count(s => s.StartsWith("StoneAssemblies.Extensibility.DemoPlugin")));
+                Assert.That(schedule.Install.Count(s => s.StartsWith("StoneAssemblies.Extensibility.DemoPlugin")), Is.EqualTo(1));
             }
         }
 
@@ -569,7 +570,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                     "1.0.0-alpha0104");
 
                 var result = await extensionManager.IsExtensionPackageScheduledToInstallAsync("StoneAssemblies.Extensibility.DemoPlugin");
-                Assert.IsTrue(result.Scheduled);
+                Assert.That(result.Scheduled, Is.True);
             }
 
             [Test]
@@ -591,8 +592,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 var result = await extensionManager.IsExtensionPackageScheduledToInstallAsync("StoneAssemblies.Extensibility.DemoPlugin2");
 
-                Assert.IsFalse(result.Scheduled);
-                Assert.IsEmpty(result.Version);
+                Assert.That(result.Scheduled, Is.False);
+                Assert.That(result.Version, Is.Empty);
             }
         }
 
@@ -617,7 +618,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.ScheduleUninstallExtensionPackageAsync("StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.IsTrue(await extensionManager.IsExtensionPackageScheduledToUninstallAsync("StoneAssemblies.Extensibility.DemoPlugin"));
+                Assert.That(async () => await extensionManager.IsExtensionPackageScheduledToUninstallAsync("StoneAssemblies.Extensibility.DemoPlugin"),Is.True);
             }
 
             [Test]
@@ -637,7 +638,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.ScheduleUninstallExtensionPackageAsync("StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.IsFalse(await extensionManager.IsExtensionPackageScheduledToUninstallAsync("StoneAssemblies.Extensibility.DemoPlugin2"));
+                Assert.That(async () => await extensionManager.IsExtensionPackageScheduledToUninstallAsync("StoneAssemblies.Extensibility.DemoPlugin2"), Is.False);
             }
         }
 
@@ -661,7 +662,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 await extensionManager.ScheduleUninstallExtensionPackageAsync("StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.IsTrue(await extensionManager.IsExtensionPackageScheduledToUninstallAsync("StoneAssemblies.Extensibility.DemoPlugin"));
+                Assert.That(await extensionManager.IsExtensionPackageScheduledToUninstallAsync("StoneAssemblies.Extensibility.DemoPlugin"), Is.True);
             }
 
             [Test]
@@ -684,7 +685,7 @@ namespace StoneAssemblies.Extensibility.Tests.Services
 
                 var schedule = await extensionManager.GetScheduleAsync();
 
-                Assert.AreEqual(1, schedule.Uninstall.Count(s => s.StartsWith("StoneAssemblies.Extensibility.DemoPlugin")));
+                Assert.That(schedule.Uninstall.Count(s => s.StartsWith("StoneAssemblies.Extensibility.DemoPlugin")), Is.EqualTo(1));
             }
         }
 
@@ -717,8 +718,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var extensionPackage = extensionPackages.FirstOrDefault(
                     package => package.Id == "StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.NotNull(extensionPackage?.InstalledVersion);
-                Assert.NotNull(extensionPackage?.Versions);
+                Assert.That(extensionPackage?.InstalledVersion, Is.Not.Null);
+                Assert.That(extensionPackage?.Versions, Is.Not.Null);
             }
 
 
@@ -754,8 +755,8 @@ namespace StoneAssemblies.Extensibility.Tests.Services
                 var extensionPackage =
                     await extensionManager2.GetExtensionPackageByIdAsync("StoneAssemblies.Extensibility.DemoPlugin");
 
-                Assert.NotNull(extensionPackage?.InstalledVersion);
-                Assert.IsNull(extensionPackage?.Versions);
+                Assert.That(extensionPackage?.InstalledVersion, Is.Not.Null);
+                Assert.That(extensionPackage?.Versions, Is.Null);
             }
         }
     }

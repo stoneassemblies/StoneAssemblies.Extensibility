@@ -27,6 +27,8 @@ namespace StoneAssemblies.Extensibility
         public static readonly string[] TargetFrameworks =
             {
 #if NET5_0_OR_GREATER
+                "net8.0",
+                "net7.0",
                 "net6.0",
                 "net5.0",
 #endif

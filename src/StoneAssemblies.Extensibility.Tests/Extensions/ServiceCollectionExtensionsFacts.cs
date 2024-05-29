@@ -47,7 +47,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                             settings.InitializePluginDependencies = initializePluginDependencies;
                         });
 
-                Assert.AreEqual(expectedRegisteredServiceCount, serviceCollection.Count);
+                Assert.That(expectedRegisteredServiceCount, Is.EqualTo(serviceCollection.Count));
             }
 
             /// <summary>
@@ -71,7 +71,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                             settings.IgnoreInstalledExtensionPackages = true;
                         });
 
-                Assert.AreEqual(1, serviceCollection.Count);
+                Assert.That(serviceCollection.Count, Is.EqualTo(1));
             }
         }
 
@@ -94,7 +94,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                         settings.IgnoreSchedule = true;
                     });
 
-            Assert.IsNotEmpty(serviceCollection);
+            Assert.That(serviceCollection, Is.Not.Empty);
         }
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace StoneAssemblies.Extensibility.Tests.Extensions
                         settings.IgnoreSchedule = true;
                     });
 
-            Assert.NotNull(extensionManager);
+            Assert.That(extensionManager, Is.Not.Null);
         }
     }
 }
